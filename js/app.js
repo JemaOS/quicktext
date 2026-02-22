@@ -403,6 +403,18 @@ document.addEventListener('pwa-launch-files', function(e) {
   }
 });
 
+// Handle PWA new-file launch (when user creates new file via context menu)
+document.addEventListener('pwa-new-file', function(e) {
+  if (textApp.tabs_) {
+    // Create a new empty tab
+    textApp.tabs_.newTab();
+    // Focus the window
+    if (textApp.windowController_) {
+      textApp.windowController_.focus_();
+    }
+  }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
   textApp.init();
 });

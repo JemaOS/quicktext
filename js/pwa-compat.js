@@ -192,6 +192,7 @@ const PWACompat = (function() {
     handleLaunchFiles: async function() {
       if ('launchQueue' in window && 'LaunchParams' in window) {
         window.launchQueue.setConsumer(async (launchParams) => {
+          // Handle new-file launch type (when user creates new file via context menu)
           if (launchParams.files && launchParams.files.length > 0) {
             const files = [];
             for (const handle of launchParams.files) {
@@ -205,6 +206,11 @@ const PWACompat = (function() {
             
             // Trigger custom event with files
             const event = new CustomEvent('pwa-launch-files', { detail: files });
+            document.dispatchEvent(event);
+          } else {
+            // App was launched but no files passed - this could be a new-file request
+            // Dispatch event to create a new empty tab
+            const event = new CustomEvent('pwa-new-file', { detail: { type: 'new-file' } });
             document.dispatchEvent(event);
           }
         });
