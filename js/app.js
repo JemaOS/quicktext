@@ -385,6 +385,24 @@ TextApp.prototype.onSettingsChanged_ = function(e, key, value) {
 
 const textApp = new TextApp();
 
+// Handle PWA file launch (when files are opened via file handler)
+document.addEventListener('pwa-launch-files', function(e) {
+  const files = e.detail;
+  if (files && files.length > 0 && textApp.tabs_) {
+    // Open each file passed via file handler
+    files.forEach(fileData => {
+      // Create a fake entry object to work with existing code
+      const fakeEntry = {
+        name: fileData.name,
+        content: fileData.content,
+        handle: fileData.handle,
+        isPWAFile: true
+      };
+      textApp.tabs_.openFileEntry(fakeEntry);
+    });
+  }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
   textApp.init();
 });

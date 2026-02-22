@@ -471,6 +471,12 @@ Tabs.prototype.getFilesToRetain = function() {
 };
 
 Tabs.prototype.openFileEntry = function(entry) {
+  // Handle PWA files (File System Access API)
+  if (entry && entry.isPWAFile) {
+    this.openPWAFileEntry(entry);
+    return;
+  }
+  
   chrome.fileSystem.getDisplayPath(entry, function(path) {
     for (var i = 0; i < this.tabs_.length; i++) {
       if (this.tabs_[i].getPath() === path) {
@@ -481,6 +487,31 @@ Tabs.prototype.openFileEntry = function(entry) {
 
     entry.file(this.readFileToNewTab_.bind(this, entry));
   }.bind(this));
+};
+
+/**
+ * Open a PWA file entry (File System Access API)
+ * @param {Object} entry - PWA file entry with handle
+ */
+Tabs.prototype.openPWAFileEntry = function(entry) {
+  // Check if already open
+  for (var i = 0; i < this.tabs_.length; i++) {
+    var tab = this.tabs_[i];
+    if (tab.getEntry() && tab.getEntry().name === entry.name) {
+      this.showTab(tab.getId());
+      return;
+    }
+  }
+
+  // Create new tab with the content
+  this.newTab(entry.content, entry);
+  
+  // Close empty initial tab if exists
+  if (this.tabs_.length === 2 &&
+      !this.tabs_[0].getEntry() &&
+      this.tabs_[0].isSaved()) {
+    this.close(this.tabs_[0].getId());
+  }
 };
 
 /**
