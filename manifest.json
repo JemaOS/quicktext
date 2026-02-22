@@ -1,9 +1,11 @@
 {
   "comment": "Copyright (c) 2025 Jema Technology. Distributed under the license specified in the root directory of this project.",
-  "name": "QuickText",
+  "name": "QuickText - JemaOS Text Editor",
   "short_name": "QuickText",
-  "description": "QuickText - Fast and simple text editor",
-  "start_url": "/index.html",
+  "description": "QuickText - Fast and simple text editor for JemaOS",
+  "version": "1.0.0",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7376db",
@@ -13,43 +15,43 @@
       "src": "icon/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/16x16.png",
       "sizes": "16x16",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/32x32.png",
       "sizes": "32x32",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/48x48.png",
       "sizes": "48x48",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/64x64.png",
       "sizes": "64x64",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon/256x256.png",
@@ -58,26 +60,92 @@
       "purpose": "any maskable"
     }
   ],
-  "file_handlers": {
-    "text": {
+  "file_handlers": [
+    {
+      "action": "/",
       "accept": {
-        "text/plain": [".txt", ".text", ".log", ".md", ".rtf"],
-        "text/html": [".html", ".htm"],
-        "text/css": [".css"],
-        "application/json": [".json"],
-        "application/xml": [".xml"],
-        "application/javascript": [".js"],
-        "text/x-python": [".py"],
-        "text/x-csrc": [".c", ".h"],
-        "text/x-c++src": [".cpp", ".hpp", ".cc", ".cxx"],
-        "text/x-java": [".java"],
-        "text/x-rustsrc": [".rs"],
-        "text/x-go": [".go"],
-        "text/x-script.python": [".pyw"]
+        "text/plain": [".txt", ".text", ".log"]
       },
-      "launch_type": "single-client"
+      "icons": {
+        "16": "icon/16x16.png",
+        "32": "icon/32x32.png",
+        "48": "icon/48x48.png",
+        "64": "icon/64x64.png",
+        "128": "icon/128x128.png",
+        "256": "icon/256x256.png"
+      }
+    },
+    {
+      "action": "/",
+      "accept": {
+        "text/markdown": [".md", ".markdown"]
+      },
+      "icons": {
+        "16": "icon/16x16.png",
+        "32": "icon/32x32.png",
+        "48": "icon/48x48.png",
+        "64": "icon/64x64.png",
+        "128": "icon/128x128.png",
+        "256": "icon/256x256.png"
+      }
+    },
+    {
+      "action": "/",
+      "accept": {
+        "text/html": [".html", ".htm"]
+      },
+      "icons": {
+        "16": "icon/16x16.png",
+        "32": "icon/32x32.png",
+        "48": "icon/48x48.png",
+        "64": "icon/64x64.png",
+        "128": "icon/128x128.png",
+        "256": "icon/256x256.png"
+      }
+    },
+    {
+      "action": "/",
+      "accept": {
+        "application/json": [".json"]
+      },
+      "icons": {
+        "16": "icon/16x16.png",
+        "32": "icon/32x32.png",
+        "48": "icon/48x48.png",
+        "64": "icon/64x64.png",
+        "128": "icon/128x128.png",
+        "256": "icon/256x256.png"
+      }
+    },
+    {
+      "action": "/",
+      "accept": {
+        "application/javascript": [".js"]
+      },
+      "icons": {
+        "16": "icon/16x16.png",
+        "32": "icon/32x32.png",
+        "48": "icon/48x48.png",
+        "64": "icon/64x64.png",
+        "128": "icon/128x128.png",
+        "256": "icon/256x256.png"
+      }
+    },
+    {
+      "action": "/",
+      "accept": {
+        "text/css": [".css"]
+      },
+      "icons": {
+        "16": "icon/16x16.png",
+        "32": "icon/32x32.png",
+        "48": "icon/48x48.png",
+        "64": "icon/64x64.png",
+        "128": "icon/128x128.png",
+        "256": "icon/256x256.png"
+      }
     }
-  },
+  ],
   "share_target": {
     "action": "/",
     "method": "GET",
