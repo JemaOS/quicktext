@@ -1,38 +1,74 @@
 {
-  "name": "Text Dev",
-  "description": "__MSG_appDesc__",
-  "default_locale": "en",
-  "version": "0.8",
-  "icons": {
-    "16": "icon/16x16.png",
-    "32": "icon/32x32.png",
-    "48": "icon/48x48.png",
-    "64": "icon/64x64.png",
-    "96": "icon/96x96.png",
-    "128": "icon/128x128.png",
-    "256": "icon/256x256.png"
-  },
-  "manifest_version": 2,
-  "minimum_chrome_version": "31.0",
-  "offline_enabled": true,
-  "app": {
-    "background": {
-      "scripts": [
-        "js/background.js",
-        "js/util.js"
-      ]
+  "comment": "Copyright (c) 2025 Jema Technology. Distributed under the license specified in the root directory of this project.",
+  "name": "QuickText",
+  "short_name": "QuickText",
+  "description": "QuickText - Fast and simple text editor",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7376db",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/48x48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/64x64.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon/256x256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  },
-  "permissions": [
-    "app.window.alwaysOnTop",
-    {"fileSystem": ["write", "retainEntries"]},
-    "storage"
   ],
   "file_handlers": {
     "text": {
-      "types": ["application/javascript", "application/json", "application/x-shellscript", "application/xml", "text/*"],
-      "extensions": ["asp", "aspx", "abc", "acgi", "aip", "asm", "c", "c++", "cc", "clj", "com", "coffee", "conf", "cpp", "cs", "csh", "css", "csv", "cxx", "def", "diff", "ejs", "el", "eml", "etx", "f", "f77", "f90", "flx", "for", "g", "gn", "gemspec", "go", "groovy", "gyp", "gypi", "h", "hh", "hlb", "hpp", "hs", "htc", "htm", "html", "htmls", "htt", "htx", "ics", "idc", "ifb", "jav", "java", "js", "json", "jsp", "ksh", "list", "log", "lsp", "lst", "lsx", "lua", "m", "mk", "mm", "man", "manifest", "mar", "mcf", "md", "mdoc", "me", "ms", "p", "pch", "pas", "patch", "pl", "plist", "pm", "pod", "py", "rake", "rb", "rexx", "roff", "rst", "rt", "rtx", "ru", "s", "scm", "sdml", "sgm", "sgml", "sh", "shtml", "spc", "ssi", "st", "t", "talk", "tcl", "tcsh", "text", "textile", "tr", "tsv", "txt", "uil", "uni", "unis", "uri", "uris", "uu", "uue", "vcf", "vcs", "wml", "wmls", "wsc", "xht", "xhtm", "xhtml", "xml", "yaml", "yml", "zsh"]
+      "accept": {
+        "text/plain": [".txt", ".text", ".log", ".md"]
+      },
+      "launch_type": "single-client"
     }
   },
-  "kiosk_enabled" : true
+  "share_target": {
+    "accept": ["text/plain", "text/markdown"]
+  },
+  "categories": ["utility", "textEditor"],
+  "prefer_related_applications": false
 }

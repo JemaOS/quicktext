@@ -1,3 +1,5 @@
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
 /**
  * @constructor
  * @param {number} id
@@ -15,6 +17,7 @@ function Tab(id, session, lineEndings, entry, dialogController) {
   this.entry_ = entry;
   this.saved_ = true;
   this.path_ = null;
+  this.customName_ = null;
   this.dialogController_ = dialogController;
   if (this.entry_)
     this.updatePath_();
@@ -27,9 +30,17 @@ Tab.prototype.getId = function() {
 Tab.prototype.getName = function() {
   if (this.entry_) {
     return this.entry_.name;
+  } else if (this.customName_) {
+    return this.customName_;
   } else {
-    // TODO: i18n 'Untitled' text
-    return 'Untitled ' + this.id_;
+    return chrome.i18n.getMessage('untitledFile', [this.id_]) || ('Untitled ' + this.id_);
+  }
+};
+
+Tab.prototype.setName = function(name) {
+  if (!this.entry_) {
+    this.customName_ = name;
+    $.event.trigger('tabrenamed', this);
   }
 };
 

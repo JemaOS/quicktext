@@ -1,3 +1,5 @@
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
 /**
  * @constructor
  * @param {Settings} settings Settings service.
@@ -33,7 +35,7 @@ SettingsController.prototype.addInputListeners_ = function() {
       case 'radio':
         for (const element of
             document.querySelectorAll('input[name=setting-' + key + ']')) {
-          element.addEventListener('input', () => this.saveSetting_(key));
+          element.addEventListener('change', () => this.saveSetting_(key));
         }
         break;
     }
@@ -76,8 +78,7 @@ SettingsController.prototype.show_ = function(key, value) {
       $('#setting-' +key).val(parseInt(value));
       break;
     case 'radio':
-      document.getElementById('setting-' + key + '-' + value)
-          .setAttribute('checked', '');
+      document.getElementById('setting-' + key + '-' + value).checked = true;
   }
 };
 

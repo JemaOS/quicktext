@@ -1,3 +1,5 @@
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
 /**
  * @constructor
  */
@@ -23,6 +25,49 @@ function WindowController(editor, settings, tabs) {
   $(document).bind('tabsave', this.onTabChange_.bind(this));
 
   this.initUI_();
+  
+  const self = this;
+  $('#title-filename').dblclick(function() {
+    const tab = self.tabs_.getCurrentTab();
+    if (!tab) return;
+    
+    if (tab.getEntry()) {
+      // If it's a saved file, trigger Save As
+      self.tabs_.saveAs();
+      return;
+    }
+    
+    $(this).attr('contenteditable', 'true').focus();
+    
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(this);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+  
+  $('#title-filename').on('blur keydown', function(e) {
+    if ($(this).attr('contenteditable') !== 'true') return;
+    
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== 'Escape') return;
+    
+    if (e.type === 'keydown') {
+      e.preventDefault();
+      $(this).blur();
+      return;
+    }
+    
+    $(this).attr('contenteditable', 'false');
+    const newName = $(this).text().trim();
+    const tab = self.tabs_.getCurrentTab();
+    if (tab && !tab.getEntry() && newName) {
+      tab.setName(newName);
+    } else if (tab) {
+      // Revert to original name if empty
+      $(this).text(tab.getName());
+    }
+  });
 }
 
 /**

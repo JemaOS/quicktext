@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# Copyright (c) 2025 Jema Technology.
+# Distributed under the license specified in the root directory of this project.
 
 import json
 import os
@@ -10,8 +12,8 @@ import urllib.parse
 import urllib.request
 import glob
 
-APP_NAME = 'Text'
-CANARY_APP_NAME = 'Text Canary'
+APP_NAME = 'QuickText'
+CANARY_APP_NAME = 'QuickText Canary'
 IS_APP = True
 
 BASE_DIR = os.path.dirname(sys.argv[0])

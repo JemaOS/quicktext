@@ -1,3 +1,5 @@
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
 /**
  * @constructor
  */
@@ -51,6 +53,10 @@ MenuController.prototype.addNewTab_ = function(e, tab) {
       'drop', (event) => { this.onDrop_(event); });
   filenameElement.addEventListener(
       'click', () => { this.tabButtonClicked_(id); });
+  filenameElement.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    this.renameTab_(id, filenameElement);
+  });
   closeElement.addEventListener(
       'click', (event) => { this.closeTab_(event, id); });
 };
@@ -133,7 +139,19 @@ MenuController.prototype.saveas_ = function() {
 };
 
 MenuController.prototype.openShortcuts_ = function() {
-  window.open('https://support.google.com/chromebook/answer/183101#textapp', '_blank');
+  this.tabs_.dialogController_.setText(
+    "Raccourcis clavier :",
+    "Ctrl+N : Nouveau fichier",
+    "Ctrl+O : Ouvrir un fichier",
+    "Ctrl+S : Enregistrer",
+    "Ctrl+Maj+S : Enregistrer sous",
+    "Ctrl+F : Rechercher",
+    "Ctrl+H : Remplacer",
+    "Ctrl+W : Fermer l'onglet"
+  );
+  this.tabs_.dialogController_.resetButtons();
+  this.tabs_.dialogController_.addButton('ok', chrome.i18n.getMessage('okDialogButton'));
+  this.tabs_.dialogController_.show();
   return false;
 };
 
@@ -150,4 +168,33 @@ MenuController.prototype.tabButtonClicked_ = function(id) {
 MenuController.prototype.closeTab_ = function(e, id) {
   this.tabs_.close(id);
   e.stopPropagation();
+};
+
+MenuController.prototype.renameTab_ = function(id, filenameElement) {
+  const tab = this.tabs_.getTab(id);
+  if (!tab) return;
+
+  filenameElement.contentEditable = true;
+  filenameElement.textContent = tab.getName();
+  filenameElement.focus();
+  document.execCommand('selectAll', false, null);
+
+  const save = () => {
+    const newName = filenameElement.textContent.trim();
+    filenameElement.contentEditable = false;
+    if (newName && newName !== tab.getName()) {
+      tab.setCustomName(newName);
+      $(document).trigger('tabrenamed', tab);
+    } else {
+      filenameElement.textContent = tab.getName();
+    }
+  };
+
+  filenameElement.addEventListener('blur', save);
+  filenameElement.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      filenameElement.blur();
+    }
+  });
 };

@@ -1,5 +1,8 @@
 'use strict';
 
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
+
 /**
  * @constructor
  * @param {DOM} elementId
@@ -47,12 +50,16 @@ function EditorCodeMirror(editorElement, settings) {
     },
     ".cm-content": {
       fontSize: "var(--ta-editor-font-size)",
+      fontFamily: "var(--ta-editor-font-family, monospace)",
+      fontWeight: "var(--ta-editor-font-weight, normal)",
+      fontStyle: "var(--ta-editor-font-style, normal)",
       lineHeight: "1.2",
     },
     ".cm-gutter": {
       backgroundColor: "var(--ta-background-color)",
       color: "var(--ta-editor-line-number-text-color)",
       fontSize: "var(--ta-editor-font-size)",
+      fontFamily: "var(--ta-editor-font-family, monospace)",
       lineHeight: "1.2",
     },
     ".cm-cursor": {

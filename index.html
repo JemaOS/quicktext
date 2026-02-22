@@ -1,7 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Text</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="QuickText - Fast and simple text editor">
+  <meta name="theme-color" content="#7376db">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="QuickText">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon/logo.svg">
+  <link rel="apple-touch-icon" href="icon/256x256.png">
+  <title>QuickText</title>
   <link href="third_party/material-components-web/material-components-web.min.css" rel="stylesheet">
   <link href="third_party/material-design-icons/iconfont/material-icons.css" rel="stylesheet">
   <link href="css/app.css" rel="stylesheet">
@@ -12,7 +22,7 @@
     <div id="sidebar">
       <div id="sidebar-resizer"></div>
       <div id="file-tabs-menu" role="navigation">
-        <h1>Text</h1>
+        <h1>QuickText</h1>
 
         <hr>
 
@@ -197,6 +207,33 @@
     <div id="main-container">
       <header>
         <button class="mdc-icon-button material-icons" id="toggle-sidebar" i18n-values="title:openSidebarButton;aria-label:openSidebarButton">menu</button>
+        
+        <div class="format-toolbar" style="display: flex; align-items: center; margin-left: 10px; gap: 2px;">
+          <button class="mdc-icon-button material-icons" id="undo-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Annuler (Ctrl+Z)">undo</button>
+          <button class="mdc-icon-button material-icons" id="redo-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Rétablir (Ctrl+Y)">redo</button>
+          <div style="width: 1px; height: 16px; background: var(--ta-divider-color); margin: 0 5px;"></div>
+          <button class="mdc-icon-button material-icons" id="cut-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Couper (Ctrl+X)">content_cut</button>
+          <button class="mdc-icon-button material-icons" id="copy-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Copier (Ctrl+C)">content_copy</button>
+          <button class="mdc-icon-button material-icons" id="paste-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Coller (Ctrl+V)">content_paste</button>
+          <div style="width: 1px; height: 16px; background: var(--ta-divider-color); margin: 0 5px;"></div>
+          <select id="font-family-select" style="height: 24px; background: var(--ta-background-color); color: var(--ta-editor-text-color); border: 1px solid var(--ta-divider-color); border-radius: 4px; font-size: 12px;">
+            <option value="monospace">Monospace</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+          </select>
+          <input type="number" id="font-size-input" value="14" min="8" max="72" style="width: 40px; height: 24px; background: var(--ta-background-color); color: var(--ta-editor-text-color); border: 1px solid var(--ta-divider-color); border-radius: 4px; font-size: 12px; text-align: center; margin-left: 5px;" title="Taille de police">
+          <input type="color" id="text-color-input" value="#000000" style="height: 24px; width: 24px; padding: 0; border: none; background: transparent; cursor: pointer; margin-left: 5px;" title="Couleur du texte">
+          <button class="mdc-icon-button material-icons" id="bold-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; margin-left: 5px; border-radius: 50%;" title="Gras">format_bold</button>
+          <button class="mdc-icon-button material-icons" id="italic-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Italique">format_italic</button>
+          <div style="width: 1px; height: 16px; background: var(--ta-divider-color); margin: 0 5px;"></div>
+          <button class="mdc-icon-button material-icons" id="align-left-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Aligner à gauche">format_align_left</button>
+          <button class="mdc-icon-button material-icons" id="align-center-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Centrer">format_align_center</button>
+          <button class="mdc-icon-button material-icons" id="align-right-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Aligner à droite">format_align_right</button>
+        </div>
+
         <div class="search-container">
           <div id="search-input-container">
             <input type="search" id="search-input"
@@ -246,6 +283,8 @@
 
   <!-- JS -->
   <!-- Everything in this JS block will be replaced with a single .js file include at compilation -->
+  <script src="js/chrome-shim.js" type="text/javascript"></script>
+  <script src="js/pwa-compat.js" type="text/javascript"></script>
   <script src="js/app.js" type="text/javascript"></script>
   <script src="js/editor-cm.js" type="text/javascript"></script>
   <script src="js/i18n-template.js" type="text/javascript"></script>
@@ -260,6 +299,21 @@
   <script src="js/controllers/settings.js" type="text/javascript"></script>
   <script src="js/controllers/window.js" type="text/javascript"></script>
   <!-- /JS -->
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('QuickText PWA: Service Worker registered with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('QuickText PWA: Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
 
 </body>
 </html>

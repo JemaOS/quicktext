@@ -1,3 +1,5 @@
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
 /**
  * @fileoverview This is a simple template engine inspired by JsTemplates
  * optimized for i18n.

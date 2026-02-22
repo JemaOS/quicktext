@@ -1,3 +1,5 @@
+/* Copyright (c) 2025 Jema Technology.
+     Distributed under the license specified in the root directory of this project. */
 /**
  * @constructor
  */
@@ -78,9 +80,231 @@ TextApp.prototype.onSettingsReady_ = function() {
 
   this.windowController_.setAlwaysOnTop(this.settings_.get('alwaysontop'));
 
+  // Setup format toolbar
+  this.setupFormatToolbar_();
+
   chrome.runtime.getBackgroundPage(function(bg) {
     bg.background.onWindowReady(this);
   }.bind(this));
+};
+
+/**
+ * Setup the format toolbar in the header.
+ */
+TextApp.prototype.setupFormatToolbar_ = function() {
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
+  const cutBtn = document.getElementById('cut-btn');
+  const copyBtn = document.getElementById('copy-btn');
+  const pasteBtn = document.getElementById('paste-btn');
+  
+  const fontFamilySelect = document.getElementById('font-family-select');
+  const fontSizeInput = document.getElementById('font-size-input');
+  const textColorInput = document.getElementById('text-color-input');
+  const boldBtn = document.getElementById('bold-btn');
+  const italicBtn = document.getElementById('italic-btn');
+  const alignLeftBtn = document.getElementById('align-left-btn');
+  const alignCenterBtn = document.getElementById('align-center-btn');
+  const alignRightBtn = document.getElementById('align-right-btn');
+
+  // Load saved settings or defaults
+  const savedFont = localStorage.getItem('quicktext_font_family') || 'monospace';
+  let savedColor = localStorage.getItem('quicktext_text_color') || '';
+  let isBold = localStorage.getItem('quicktext_text_bold') === 'true';
+  let isItalic = localStorage.getItem('quicktext_text_italic') === 'true';
+
+  fontFamilySelect.value = savedFont;
+  
+  // Sync font size with settings
+  if (this.settings_) {
+    fontSizeInput.value = this.settings_.get('fontsize');
+  }
+  
+  $(document).bind('settingschange', (e, key, value) => {
+    if (key === 'fontsize') {
+      fontSizeInput.value = value;
+    } else if (key === 'theme') {
+      setTimeout(updateColorPickerUI, 50);
+    }
+  });
+
+  fontSizeInput.addEventListener('change', (e) => {
+    if (this.settings_) {
+      this.settings_.set('fontsize', parseInt(e.target.value));
+    }
+  });
+  
+  const updateColorPickerUI = () => {
+    if (savedColor) {
+      textColorInput.value = savedColor;
+    } else {
+      // If no custom color, show the theme's default text color
+      const isDark = document.body.getAttribute('theme') === 'dark';
+      textColorInput.value = isDark ? '#f8f8f2' : '#000000';
+    }
+  };
+
+  const updateStyleButtons = () => {
+    boldBtn.style.backgroundColor = isBold ? 'var(--ta-highlight-color)' : 'transparent';
+    italicBtn.style.backgroundColor = isItalic ? 'var(--ta-highlight-color)' : 'transparent';
+    
+    const currentAlign = localStorage.getItem('quicktext_text_align') || 'left';
+    alignLeftBtn.style.backgroundColor = currentAlign === 'left' ? 'var(--ta-highlight-color)' : 'transparent';
+    alignCenterBtn.style.backgroundColor = currentAlign === 'center' ? 'var(--ta-highlight-color)' : 'transparent';
+    alignRightBtn.style.backgroundColor = currentAlign === 'right' ? 'var(--ta-highlight-color)' : 'transparent';
+  };
+
+  const applyFormat = () => {
+    const editorEl = document.getElementById('editor');
+    if (!editorEl) return;
+    
+    const font = fontFamilySelect.value;
+    
+    editorEl.style.setProperty('--ta-editor-font-family', font);
+    
+    if (isBold) {
+      editorEl.style.setProperty('--ta-editor-font-weight', 'bold');
+    } else {
+      editorEl.style.removeProperty('--ta-editor-font-weight');
+    }
+    
+    if (isItalic) {
+      editorEl.style.setProperty('--ta-editor-font-style', 'italic');
+    } else {
+      editorEl.style.removeProperty('--ta-editor-font-style');
+    }
+    
+    if (savedColor) {
+      editorEl.style.setProperty('--ta-editor-text-color', savedColor);
+    } else {
+      editorEl.style.removeProperty('--ta-editor-text-color');
+    }
+    
+    // Apply alignment to CodeMirror content
+    const currentAlign = localStorage.getItem('quicktext_text_align') || 'left';
+    const cmContent = editorEl.querySelector('.cm-content');
+    if (cmContent) {
+      cmContent.style.textAlign = currentAlign;
+    }
+    
+    updateColorPickerUI();
+    updateStyleButtons();
+  };
+
+  // Apply initially (might need a slight delay for CodeMirror to render)
+  setTimeout(applyFormat, 100);
+
+  fontFamilySelect.addEventListener('change', (e) => {
+    localStorage.setItem('quicktext_font_family', e.target.value);
+    applyFormat();
+  });
+
+  textColorInput.addEventListener('input', (e) => {
+    savedColor = e.target.value;
+    localStorage.setItem('quicktext_text_color', savedColor);
+    applyFormat();
+  });
+  
+  boldBtn.addEventListener('click', () => {
+    isBold = !isBold;
+    localStorage.setItem('quicktext_text_bold', isBold);
+    applyFormat();
+  });
+
+  italicBtn.addEventListener('click', () => {
+    isItalic = !isItalic;
+    localStorage.setItem('quicktext_text_italic', isItalic);
+    applyFormat();
+  });
+  
+  // Add a reset color button
+  const resetColorBtn = document.createElement('button');
+  resetColorBtn.className = 'mdc-icon-button material-icons';
+  resetColorBtn.style.cssText = 'width: 32px; height: 32px; padding: 4px; font-size: 18px; margin-left: 2px; border-radius: 50%;';
+  resetColorBtn.title = 'Réinitialiser la couleur';
+  resetColorBtn.textContent = 'format_color_reset';
+  resetColorBtn.addEventListener('click', () => {
+    savedColor = '';
+    localStorage.removeItem('quicktext_text_color');
+    applyFormat();
+  });
+  textColorInput.parentNode.insertBefore(resetColorBtn, textColorInput.nextSibling);
+
+  const setAlign = (align) => {
+    localStorage.setItem('quicktext_text_align', align);
+    const cmContent = document.querySelector('.cm-content');
+    if (cmContent) cmContent.style.textAlign = align;
+    updateStyleButtons();
+  };
+
+  alignLeftBtn.addEventListener('click', () => setAlign('left'));
+  alignCenterBtn.addEventListener('click', () => setAlign('center'));
+  alignRightBtn.addEventListener('click', () => setAlign('right'));
+  
+  // Edit actions
+  undoBtn.addEventListener('click', () => {
+    if (this.editor_ && this.editor_.editorView_) {
+      window.CodeMirror.commands.undo({
+        state: this.editor_.editorView_.state,
+        dispatch: this.editor_.editorView_.dispatch
+      });
+      this.editor_.focus();
+    }
+  });
+  
+  redoBtn.addEventListener('click', () => {
+    if (this.editor_ && this.editor_.editorView_) {
+      window.CodeMirror.commands.redo({
+        state: this.editor_.editorView_.state,
+        dispatch: this.editor_.editorView_.dispatch
+      });
+      this.editor_.focus();
+    }
+  });
+  
+  cutBtn.addEventListener('click', () => {
+    document.execCommand('cut');
+    if (this.editor_) this.editor_.focus();
+  });
+  
+  copyBtn.addEventListener('click', () => {
+    document.execCommand('copy');
+    if (this.editor_) this.editor_.focus();
+  });
+  
+  pasteBtn.addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (this.editor_ && this.editor_.editorView_) {
+        const view = this.editor_.editorView_;
+        const selection = view.state.selection.main;
+        view.dispatch({
+          changes: {
+            from: selection.from,
+            to: selection.to,
+            insert: text
+          },
+          selection: { anchor: selection.from + text.length },
+          scrollIntoView: true
+        });
+        this.editor_.focus();
+      }
+    } catch (err) {
+      console.error('Failed to read clipboard contents: ', err);
+      // Fallback
+      document.execCommand('paste');
+      if (this.editor_) this.editor_.focus();
+    }
+  });
+  
+  // Re-apply alignment when switching tabs (since CodeMirror might recreate the content div)
+  $(document).bind('switchtab', () => {
+    setTimeout(() => {
+      const align = localStorage.getItem('quicktext_text_align') || 'left';
+      const cmContent = document.querySelector('.cm-content');
+      if (cmContent) cmContent.style.textAlign = align;
+    }, 50);
+  });
 };
 
 /**

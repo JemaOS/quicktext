@@ -1,0 +1,21 @@
+{
+  "name": "quicktext",
+  "version": "1.0.0",
+  "description": "QuickText - Fast and simple text editor PWA",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve -l 3000",
+    "start": "npx serve -l 3000",
+    "build": "echo 'No build step required for PWA'"
+  },
+  "keywords": [
+    "pwa",
+    "text-editor",
+    "quicktext"
+  ],
+  "author": "Jema Technology",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
