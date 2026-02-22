@@ -609,14 +609,25 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 }
 
 input[type="color"]::-webkit-color-swatch {
-  border: 1px solid var(--ta-border-color);
+  border: 1px solid var(--ta-divider-color);
   border-radius: 4px;
+}
+
+/* Style the color picker popup itself (Chrome/Edge specific) */
+::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+::-webkit-color-swatch {
+  border: none;
 }
 
 /* Sidebar filename editing */
 .filename[contenteditable="true"] {
-  background: var(--ta-bg-color);
-  border: 1px solid var(--ta-accent-color);
+  background: var(--ta-background-color);
+  border: 1px solid var(--ta-divider-color);
+  border-radius: 4px;
+  color: var(--ta-ui-text-color);
   outline: none;
   padding: 0 4px;
   text-align: center;
@@ -768,4 +779,97 @@ input[type=search]:focus {
 
 header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   background-color: rgba(253, 207, 76, .5);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .format-toolbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    height: auto;
+    padding: 4px 0;
+  }
+  
+  header {
+    height: auto;
+    min-height: var(--header-height);
+    flex-wrap: wrap;
+  }
+  
+  #title-filename {
+    order: 3;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+  
+  .search-container {
+    order: 2;
+    margin-left: auto;
+    margin-right: 10px;
+  }
+}
+
+@media (max-width: 992px) {
+  .format-toolbar {
+    gap: 1px !important;
+  }
+  
+  .format-toolbar .mdc-icon-button {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 16px !important;
+  }
+  
+  #font-family-select {
+    width: 80px;
+  }
+  
+  #search-input-container {
+    width: 120px;
+  }
+  
+  #search-input {
+    width: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .format-toolbar {
+    display: none !important; /* Hide format toolbar on tablets and smaller */
+  }
+  
+  .search-container {
+    order: unset;
+    margin-left: auto;
+    margin-right: 10px;
+  }
+  
+  #title-filename {
+    order: unset;
+    width: auto;
+    margin: 0;
+  }
+  
+  header {
+    height: var(--header-height);
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container {
+    display: none !important; /* Hide search on very small screens */
+  }
+  
+  #sidebar {
+    width: 100% !important; /* Full width sidebar on mobile */
+    max-width: 100%;
+    position: absolute;
+    z-index: 10;
+  }
+  
+  #sidebar-resizer {
+    display: none;
+  }
 }

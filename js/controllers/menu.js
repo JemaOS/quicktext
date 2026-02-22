@@ -55,7 +55,20 @@ MenuController.prototype.addNewTab_ = function(e, tab) {
       'click', () => { this.tabButtonClicked_(id); });
   filenameElement.addEventListener('dblclick', (e) => {
     e.stopPropagation();
-    this.renameTab_(id, filenameElement);
+    const tab = this.tabs_.getTab(id);
+    if (tab && tab.getEntry()) {
+      // If it's a saved file, trigger Save As
+      this.tabs_.saveAs();
+    } else {
+      this.renameTab_(id, filenameElement);
+    }
+  });
+  
+  // Prevent drag start when editing
+  filenameElement.addEventListener('mousedown', (e) => {
+    if (filenameElement.contentEditable === 'true') {
+      e.stopPropagation();
+    }
   });
   closeElement.addEventListener(
       'click', (event) => { this.closeTab_(event, id); });
@@ -174,14 +187,32 @@ MenuController.prototype.renameTab_ = function(id, filenameElement) {
   const tab = this.tabs_.getTab(id);
   if (!tab) return;
 
+  // Prevent multiple bindings
+  if (filenameElement.dataset.editing === 'true') return;
+  filenameElement.dataset.editing = 'true';
+
   filenameElement.contentEditable = true;
   filenameElement.textContent = tab.getName();
   filenameElement.focus();
-  document.execCommand('selectAll', false, null);
+  
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(filenameElement);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
 
   const save = () => {
+    if (filenameElement.dataset.editing !== 'true') return;
+    filenameElement.dataset.editing = 'false';
+    
     const newName = filenameElement.textContent.trim();
     filenameElement.contentEditable = false;
+    
+    // Remove event listeners
+    filenameElement.removeEventListener('blur', save);
+    filenameElement.removeEventListener('keydown', keydownHandler);
+    
     if (newName && newName !== tab.getName()) {
       tab.setCustomName(newName);
       $(document).trigger('tabrenamed', tab);
@@ -190,11 +221,17 @@ MenuController.prototype.renameTab_ = function(id, filenameElement) {
     }
   };
 
-  filenameElement.addEventListener('blur', save);
-  filenameElement.addEventListener('keydown', (e) => {
+  const keydownHandler = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       filenameElement.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      filenameElement.textContent = tab.getName();
+      filenameElement.blur();
     }
-  });
+  };
+
+  filenameElement.addEventListener('blur', save);
+  filenameElement.addEventListener('keydown', keydownHandler);
 };

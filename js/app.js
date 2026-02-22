@@ -244,20 +244,14 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   // Edit actions
   undoBtn.addEventListener('click', () => {
     if (this.editor_ && this.editor_.editorView_) {
-      window.CodeMirror.commands.undo({
-        state: this.editor_.editorView_.state,
-        dispatch: this.editor_.editorView_.dispatch
-      });
+      window.CodeMirror.undo(this.editor_.editorView_);
       this.editor_.focus();
     }
   });
   
   redoBtn.addEventListener('click', () => {
     if (this.editor_ && this.editor_.editorView_) {
-      window.CodeMirror.commands.redo({
-        state: this.editor_.editorView_.state,
-        dispatch: this.editor_.editorView_.dispatch
-      });
+      window.CodeMirror.redo(this.editor_.editorView_);
       this.editor_.focus();
     }
   });

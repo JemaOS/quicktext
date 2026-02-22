@@ -23,12 +23,6 @@ QuickText is a fast and simple text editor developed by **Jema Technology** for 
 
 ## Installation
 
-### Online (Recommended)
-Visit: https://text-app-jema-s-projects.vercel.app
-
-### Chrome Web Store
-Coming soon...
-
 ## Development
 
 ### Prerequisites
@@ -67,4 +61,3 @@ See [LICENSE.md](LICENSE.md) for details.
 QuickText is part of the JemaOS project - a suite of web applications designed for productivity.
 
 - 🌐 Website: https://www.jematechnology.fr
-- 📧 Contact: contact@jematechnology.fr
