@@ -61,14 +61,39 @@
   "file_handlers": {
     "text": {
       "accept": {
-        "text/plain": [".txt", ".text", ".log", ".md"]
+        "text/plain": [".txt", ".text", ".log", ".md", ".rtf"],
+        "text/html": [".html", ".htm"],
+        "text/css": [".css"],
+        "application/json": [".json"],
+        "application/xml": [".xml"],
+        "application/javascript": [".js"],
+        "text/x-python": [".py"],
+        "text/x-csrc": [".c", ".h"],
+        "text/x-c++src": [".cpp", ".hpp", ".cc", ".cxx"],
+        "text/x-java": [".java"],
+        "text/x-rustsrc": [".rs"],
+        "text/x-go": [".go"],
+        "text/x-script.python": [".pyw"]
       },
       "launch_type": "single-client"
     }
   },
   "share_target": {
-    "accept": ["text/plain", "text/markdown"]
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    },
+    "accept": ["text/plain", "text/markdown", "text/html"]
   },
+  "protocol_handlers": [
+    {
+      "protocol": "quicktext",
+      "url": "/?file=%s"
+    }
+  ],
   "categories": ["utility", "textEditor"],
   "prefer_related_applications": false
 }
