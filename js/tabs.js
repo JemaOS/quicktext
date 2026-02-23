@@ -625,6 +625,33 @@ Tabs.prototype.saveEntry_ = function(tab, entry, opt_callback) {
  */
 Tabs.prototype.onDocChanged_ = function() {
   this.currentTab_.changed();
+  
+  // Auto-save for PWA files after a delay
+  this.scheduleAutoSave_();
+}
+
+/**
+ * Schedule an auto-save after user stops typing
+ */
+Tabs.prototype.scheduleAutoSave_ = function() {
+  var self = this;
+  var tab = this.currentTab_;
+  
+  // Only auto-save if tab has an entry (saved file)
+  if (!tab || !tab.getEntry()) return;
+  
+  // Clear any existing auto-save timer
+  if (this.autoSaveTimer_) {
+    clearTimeout(this.autoSaveTimer_);
+  }
+  
+  // Schedule auto-save after 2 seconds of inactivity
+  this.autoSaveTimer_ = setTimeout(function() {
+    if (tab && tab.getEntry() && !tab.isSaved()) {
+      console.log('Auto-saving file:', tab.getEntry().name);
+      self.save(tab);
+    }
+  }, 2000);
 }
 
 /**

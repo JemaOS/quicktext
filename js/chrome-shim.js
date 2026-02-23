@@ -427,6 +427,28 @@
     }
   });
 
+  // Also handle visibility change (when user switches away from the app)
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+      // Save all open files when app goes to background
+      if (window.textApp && window.textApp.tabs_) {
+        var tabs = window.textApp.tabs_;
+        for (var i = 0; i < tabs.tabs_.length; i++) {
+          var entry = tabs.tabs_[i].getEntry();
+          if (entry && entry.name && !tabs.tabs_[i].isSaved()) {
+            // Save the file
+            var content = tabs.tabs_[i].getContent_();
+            if (window.writeFileEntry && entry.createWritable) {
+              window.writeFileEntry(entry, content, function() {
+                console.log('Auto-saved on background:', entry.name);
+              });
+            }
+          }
+        }
+      }
+    }
+  });
+
   // Shim for FileError
   window.FileError = function(code) {
     this.code = code;
