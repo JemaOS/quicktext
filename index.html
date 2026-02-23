@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="QuickText - Fast and simple text editor">
   <meta name="theme-color" content="#7376db">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -206,7 +206,8 @@
           <button class="mdc-icon-button material-icons" id="copy-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Copier (Ctrl+C)">content_copy</button>
           <button class="mdc-icon-button material-icons" id="paste-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Coller (Ctrl+V)">content_paste</button>
           <div style="width: 1px; height: 16px; background: var(--ta-divider-color); margin: 0 5px;"></div>
-          <select id="font-family-select" style="height: 24px; background: var(--ta-background-color); color: var(--ta-editor-text-color); border: 1px solid var(--ta-divider-color); border-radius: 4px; font-size: 12px;">
+          <label for="font-family-select" class="sr-only">Police</label>
+          <select id="font-family-select" aria-label="Police" style="height: 24px; background: var(--ta-background-color); color: var(--ta-editor-text-color); border: 1px solid var(--ta-divider-color); border-radius: 4px; font-size: 12px;">
             <option value="monospace">Monospace</option>
             <option value="sans-serif">Sans-serif</option>
             <option value="serif">Serif</option>
@@ -259,7 +260,7 @@
             i18n-values="title:closeButton;aria-label:closeButton">close</button>
       </header>
 
-      <div id="editor" role="main" aria-labelledby="title-filename"></div>
+      <div id="editor" role="main" aria-label="Zone de texte principale" aria-labelledby="title-filename"></div>
     </div> <!-- main-container -->
   </div> <!-- window-container -->
 

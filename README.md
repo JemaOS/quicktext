@@ -4,7 +4,7 @@
   <img src="icon/logo.svg" alt="QuickText Logo" width="128" height="128">
 </p>
 
-QuickText is a fast and simple text editor developed by **Jema Technology** for the JemaOS ecosystem. It runs as a Progressive Web App (PWA) and can be installed on any modern browser, including Chrome OS.
+QuickText is a fast and simple text editor developed by **Jema Technology** for the JemaOS ecosystem. It runs as a Progressive Web App (PWA) and can be installed on any modern browser.
 
 ## Features
 
@@ -12,7 +12,7 @@ QuickText is a fast and simple text editor developed by **Jema Technology** for 
 - 🌐 **PWA Support**: Install as a native app on desktop and mobile
 - 🔤 **Syntax Highlighting**: Support for multiple programming languages
 - 🎨 **Customizable**: Themes, fonts, and text formatting options
-- 📱 **Cross-Platform**: Works on Chrome OS, Windows, macOS, Linux
+- 📱 **Cross-Platform**: Works on JemaOS, Windows, macOS, Linux
 - 📂 **File Associations**: Open .txt files directly with QuickText
 
 ## Supported File Types
@@ -48,7 +48,7 @@ npm run build
 - **CodeMirror 6**: Text editor core
 - **Material Design**: UI components
 - **PWA**: Service Worker for offline support
-- **Chrome App API**: File system access (via shim)
+- **Chromium App API**: File system access (via shim)
 
 ## License
 

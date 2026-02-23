@@ -8,6 +8,19 @@
   --tab-height: 36px;
 }
 
+/* Screen reader only - accessible but hidden visually */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body[theme="light"] {
   --ta-accent-color: rgb(0, 0, 0, 0.04);
   --ta-divider-color: var(--ta-accent-color);
