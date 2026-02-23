@@ -885,9 +885,7 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
 }
 
 body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  /* Body rules - minimal to not interfere with app layout */
 }
 
 .app-footer a {
