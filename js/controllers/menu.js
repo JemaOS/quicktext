@@ -52,10 +52,55 @@ MenuController.prototype.addNewTab_ = function(e, tab) {
   tabElement.addEventListener(
       'drop', (event) => { this.onDrop_(event); });
   filenameElement.addEventListener(
-      'click', () => { this.tabButtonClicked_(id); });
+      'click', () => { 
+        this.tabButtonClicked_(id); 
+        // On mobile, close sidebar after selecting a tab
+        if (window.innerWidth <= 480) {
+          // Use jQuery to toggle sidebar since windowController might not be accessible this way
+          if (this.tabs_.settings_.get('sidebaropen')) {
+            this.tabs_.settings_.set('sidebaropen', false);
+            $('#sidebar').css('width', '0');
+            $('#sidebar').css('border-right-width', '0');
+            $('#toggle-sidebar').attr('title', chrome.i18n.getMessage('openSidebarButton'));
+            
+            // Update visibility
+            const sidebar = $('#sidebar');
+            if (sidebar.width() === 0) {
+              sidebar.css('visibility', 'hidden');
+            }
+          }
+        }
+      });
+  
+  // Handle double click for desktop and long press for mobile
+  let touchTimer;
+  filenameElement.addEventListener('touchstart', (e) => {
+    if (filenameElement.contentEditable === 'true') {
+      e.stopPropagation();
+      return;
+    }
+    touchTimer = setTimeout(() => {
+      e.preventDefault(); // Prevent default context menu
+      const tab = this.tabs_.getTabById(id);
+      if (tab && tab.getEntry()) {
+        this.tabs_.saveAs();
+      } else {
+        this.renameTab_(id, filenameElement);
+      }
+    }, 500); // 500ms long press
+  });
+  
+  filenameElement.addEventListener('touchend', () => {
+    clearTimeout(touchTimer);
+  });
+  
+  filenameElement.addEventListener('touchmove', () => {
+    clearTimeout(touchTimer);
+  });
+
   filenameElement.addEventListener('dblclick', (e) => {
     e.stopPropagation();
-    const tab = this.tabs_.getTab(id);
+    const tab = this.tabs_.getTabById(id);
     if (tab && tab.getEntry()) {
       // If it's a saved file, trigger Save As
       this.tabs_.saveAs();
@@ -184,7 +229,7 @@ MenuController.prototype.closeTab_ = function(e, id) {
 };
 
 MenuController.prototype.renameTab_ = function(id, filenameElement) {
-  const tab = this.tabs_.getTab(id);
+  const tab = this.tabs_.getTabById(id);
   if (!tab) return;
 
   // Prevent multiple bindings

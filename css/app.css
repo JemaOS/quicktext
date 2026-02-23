@@ -628,6 +628,11 @@ body[theme="dark"] input[type="color"] {
   color-scheme: dark;
 }
 
+/* Try to style the popup window if the browser allows it */
+input[type="color"]::-webkit-color-chooser {
+  border-radius: 8px;
+}
+
 /* Sidebar filename editing */
 .filename[contenteditable="true"] {
   background: var(--ta-background-color);
@@ -649,7 +654,8 @@ body[theme="dark"] input[type="color"] {
   text-overflow: ellipsis;
   -webkit-transition: all 200ms ease-in-out;
   white-space: nowrap;
-  margin: 0 16px; /* Add space around the title */
+  margin: 0 16px 0 21px; /* Add space around the title, 5px more on the left */
+  min-width: 100px; /* Ensure title doesn't get too small */
 }
 
 #title-filename.unsaved:after {
@@ -862,11 +868,24 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
     height: var(--header-height);
     flex-wrap: nowrap;
   }
+  
+  /* Ensure sidebar toggle is visible on mobile */
+  #toggle-sidebar {
+    display: flex !important;
+    visibility: visible !important;
+  }
 }
 
 @media (max-width: 480px) {
   .search-container {
     display: none !important; /* Hide search on very small screens */
+  }
+  
+  /* Ensure sidebar toggle button is always visible on mobile */
+  #toggle-sidebar {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   #sidebar {
