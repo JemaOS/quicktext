@@ -192,23 +192,32 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   // Apply color to selected text only
   const applyColorToSelection = (color) => {
     try {
-      // Get browser selection
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
+      const view = this.editor_?.editorView_;
+      if (!view) return;
       
-      const range = selection.getRangeAt(0);
-      if (range.collapsed) return; // No actual selection
+      const state = view.state;
+      const selection = state.selection.main;
       
-      // Wrap selection in a span with the color
-      const span = document.createElement('span');
-      span.style.color = color;
-      span.textContent = range.toString();
+      if (selection.empty) {
+        // No selection, don't apply
+        return;
+      }
       
-      range.deleteContents();
-      range.insertNode(span);
+      // Use CodeMirror 6's Text.replace method to wrap selected text with color span
+      const doc = state.doc;
+      const selectedText = doc.sliceString(selection.from, selection.to);
       
-      // Clear selection after applying
-      selection.removeAllRanges();
+      // Wrap selected text with <span> tag with color style
+      const coloredText = `<span style="color: ${color}">${selectedText}</span>`;
+      
+      view.dispatch({
+        changes: {
+          from: selection.from,
+          to: selection.to,
+          insert: coloredText
+        }
+      });
+      
     } catch (e) {
       console.error('Error applying color to selection:', e);
     }
