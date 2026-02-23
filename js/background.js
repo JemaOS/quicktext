@@ -14,8 +14,8 @@ function Background() {
  * borderless window can't be dragged or resized.
  */
 Background.prototype.ifShowFrame_ = function() {
-  var version = parseInt(navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
-  var os = 'other';
+  const version = parseInt(navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
+  const os = 'other';
   if (navigator.appVersion.indexOf('Linux') != -1) {
     os = 'linux';
   } else if (navigator.appVersion.indexOf('CrOS') != -1) {
@@ -42,7 +42,7 @@ Background.prototype.newWindow = function() {
  */
 Background.prototype.focusWindow = function(windowId) {
   const id = `appWindow${windowId}`;
-  var options = {
+  const options = {
     id,
     frame: (this.ifShowFrame_() ? 'chrome' : 'none'),
     minWidth: 400,
@@ -63,9 +63,9 @@ Background.prototype.focusWindow = function(windowId) {
  * Handle onLaunch event.
  */
 Background.prototype.launch = function(launchData) {
-  var entries = [];
+  const entries = [];
   chrome.storage.local.get('retainedEntryIds', function(data) {
-    var retainedEntryIds = data['retainedEntryIds'] || [];
+    const retainedEntryIds = data['retainedEntryIds'] || [];
     for (var i = 0; i < retainedEntryIds.length; i++) {
       chrome.fileSystem.restoreEntry(retainedEntryIds[i], function(entry) {
         if (!chrome.runtime.lastError) {
@@ -107,14 +107,14 @@ Background.prototype.onWindowClosed = function(win) {
                  win.contentWindow, win.contentWindow.textApp);
     return;
   }
-  var textApp = win.contentWindow.textApp;
+  const textApp = win.contentWindow.textApp;
   for (var i = 0; i < this.windows_.length; i++) {
     if (textApp === this.windows_[i]) {
       this.windows_.splice(i, 1);
     }
   }
 
-  var toRetain = textApp.getFilesToRetain();
+  const toRetain = textApp.getFilesToRetain();
   this.retainFiles_(toRetain);
 };
 
@@ -123,9 +123,9 @@ Background.prototype.onWindowClosed = function(win) {
  */
 Background.prototype.retainFiles_ = function(toRetain) {
   console.log('Got ' + toRetain.length + ' files to retain:', toRetain);
-  var toRetainEntryIds = [];
+  const toRetainEntryIds = [];
   for (var i = 0; i < toRetain.length; i++) {
-    var entryId = chrome.fileSystem.retainEntry(toRetain[i]);
+    const entryId = chrome.fileSystem.retainEntry(toRetain[i]);
     toRetainEntryIds.push(entryId);
   }
   chrome.storage.local.set({'retainedEntryIds': toRetainEntryIds});
