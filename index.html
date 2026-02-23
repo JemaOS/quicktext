@@ -68,7 +68,7 @@
         </ul>
       </div>
       <div id="settings-menu" role="navigation">
-        <h1 i18n-content="menuSettings"></h1>
+        <h1><span i18n-content="menuSettings"></span></h1>
         <hr>
         <div id="settings-container">
           <ul id="settings-list">
@@ -85,7 +85,7 @@
                 <div class="mdc-switch__thumb-underlay">
                   <div class="mdc-switch__thumb">
                     <input type="checkbox" id="setting-spacestab"
-                        class="mdc-switch__native-control" role="switch">
+                        class="mdc-switch__native-control" role="switch" aria-checked="false">
                   </div>
                 </div>
               </div>
@@ -102,7 +102,7 @@
                 <div class="mdc-switch__thumb-underlay">
                   <div class="mdc-switch__thumb">
                     <input type="checkbox" id="setting-wraplines"
-                        class="mdc-switch__native-control" role="switch">
+                        class="mdc-switch__native-control" role="switch" aria-checked="false">
                   </div>
                 </div>
               </div>
@@ -114,7 +114,7 @@
                 <div class="mdc-switch__thumb-underlay">
                   <div class="mdc-switch__thumb">
                     <input type="checkbox" id="setting-linenumbers"
-                        class="mdc-switch__native-control" role="switch">
+                        class="mdc-switch__native-control" role="switch" aria-checked="false">
                   </div>
                 </div>
               </div>
@@ -126,7 +126,7 @@
                 <div class="mdc-switch__thumb-underlay">
                   <div class="mdc-switch__thumb">
                     <input type="checkbox" id="setting-smartindent"
-                        class="mdc-switch__native-control" role="switch">
+                        class="mdc-switch__native-control" role="switch" aria-checked="false">
                   </div>
                 </div>
               </div>
@@ -138,13 +138,13 @@
                 <div class="mdc-switch__thumb-underlay">
                   <div class="mdc-switch__thumb">
                     <input type="checkbox" id="setting-alwaysontop"
-                        class="mdc-switch__native-control" role="switch">
+                        class="mdc-switch__native-control" role="switch" aria-checked="false">
                   </div>
                 </div>
               </div>
             </li>
             <div class="group" role="radiogroup" aria-labelledby="setting-theme-heading">
-              <h2 id="setting-theme-heading" i18n-content="themeSetting"></h2>
+              <h2 id="setting-theme-heading"><span i18n-content="themeSetting"></span></h2>
               <div class="mdc-form-field">
                 <label for="setting-theme-default" i18n-content="DeviceThemeOption"></label>
                 <div class="mdc-radio">
@@ -177,7 +177,7 @@
               </div>
             </div>
             <div class="group" aria-labelledby="setting-help-heading">
-              <h2 id="setting-help-heading" i18n-content="helpSection"></h2>
+              <h2 id="setting-help-heading"><span i18n-content="helpSection"></span></h2>
               <div class="mdc-form-field">
                 <button
                     id="open-shortcuts"

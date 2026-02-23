@@ -100,7 +100,7 @@ DialogController.prototype.onClick_ = function(id) {
  */
 DialogController.prototype.next_ = function(delta) {
   const buttons = $('.dialog-button');
-  const newIndex = $.inArray(document.activeElement, buttons) + delta;
+  let newIndex = $.inArray(document.activeElement, buttons) + delta;
   if (newIndex < 0)
     newIndex += buttons.length;
   if (newIndex >= buttons.length)

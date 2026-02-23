@@ -14,8 +14,8 @@ function Background() {
  * borderless window can't be dragged or resized.
  */
 Background.prototype.ifShowFrame_ = function() {
-  const version = parseInt(navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
-  const os = 'other';
+  const version = Number.parseInt(navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
+  let os = 'other';
   if (navigator.appVersion.indexOf('Linux') != -1) {
     os = 'linux';
   } else if (navigator.appVersion.indexOf('CrOS') != -1) {

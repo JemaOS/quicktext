@@ -225,7 +225,7 @@ WindowController.prototype.onTabChange_ = function(e, tab) {
 
 WindowController.prototype.resizeStart_ = function(e) {
   this.resizeMouseStartX_ = e.clientX;
-  this.resizeStartWidth_ = parseInt($('#sidebar').css('width'), 10);
+  this.resizeStartWidth_ = Number.parseInt($('#sidebar').css('width'), 10);
   $(document).on('mousemove.sidebar', this.resizeOnMouseMove_.bind(this));
   $(document).on('mouseup.sidebar', this.resizeFinish_.bind(this));
   $(document).css('cursor', 'e-resize !important');

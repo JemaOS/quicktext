@@ -75,7 +75,7 @@ SettingsController.prototype.show_ = function(key, value) {
       this.setSwitch_(key, value);
       break;
     case 'number':
-      $('#setting-' +key).val(parseInt(value));
+      $('#setting-' +key).val(Number.parseInt(value));
       break;
     case 'radio':
       document.getElementById('setting-' + key + '-' + value).checked = true;
@@ -113,7 +113,7 @@ SettingsController.prototype.saveSetting_ = function(key) {
       value = $('#setting-' + key).prop('checked');
       break;
     case 'number':
-      value = parseInt($('#setting-' + key).val());
+      value = Number.parseInt($('#setting-' + key).val());
       break;
     case 'radio':
       value = document.querySelector('input[name=setting-' + key + ']:checked')

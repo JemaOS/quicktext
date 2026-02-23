@@ -341,8 +341,8 @@
             
             // Restore all tabs from localStorage (including unsaved ones)
             console.log('Attempting to restore all tabs...');
-            const savedTabsStr = localStorage.getItem('quicktext_open_tabs');
-            const savedTabs = null;
+            let savedTabsStr = localStorage.getItem('quicktext_open_tabs');
+            let savedTabs = null;
             try {
               savedTabs = savedTabsStr ? JSON.parse(savedTabsStr) : null;
             } catch(e) {
@@ -355,7 +355,7 @@
               app.openTabs([]);
               
               setTimeout(function() {
-                const currentTabId = null;
+                let currentTabId = null;
                 // Find which tab was current
                 savedTabs.forEach(function(tabData) {
                   if (tabData.isCurrent) currentTabId = tabData.id;
@@ -432,7 +432,7 @@
               console.log('No saved tabs found, restoring retained file entries...');
               chrome.fileSystem.getRetainedEntries(function(entries) {
                 const restoredEntries = [];
-                const pending = entries.length;
+                let pending = entries.length;
                 
                 if (pending === 0) {
                   app.openTabs([]);

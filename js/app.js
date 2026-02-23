@@ -128,7 +128,7 @@ TextApp.prototype.setupFormatToolbar_ = function() {
 
   fontSizeInput.addEventListener('change', (e) => {
     if (this.settings_) {
-      this.settings_.set('fontsize', parseInt(e.target.value));
+      this.settings_.set('fontsize', Number.parseInt(e.target.value));
     }
   });
   
