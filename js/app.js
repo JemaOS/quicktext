@@ -92,8 +92,6 @@ TextApp.prototype.onSettingsReady_ = function() {
  * Setup the format toolbar in the header.
  */
 TextApp.prototype.setupFormatToolbar_ = function() {
-  const undoBtn = document.getElementById('undo-btn');
-  const redoBtn = document.getElementById('redo-btn');
   const cutBtn = document.getElementById('cut-btn');
   const copyBtn = document.getElementById('copy-btn');
   const pasteBtn = document.getElementById('paste-btn');
@@ -242,20 +240,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   alignRightBtn.addEventListener('click', () => setAlign('right'));
   
   // Edit actions
-  undoBtn.addEventListener('click', () => {
-    if (this.editor_ && this.editor_.editorView_) {
-      window.CodeMirror.undo(this.editor_.editorView_);
-      this.editor_.focus();
-    }
-  });
-  
-  redoBtn.addEventListener('click', () => {
-    if (this.editor_ && this.editor_.editorView_) {
-      window.CodeMirror.redo(this.editor_.editorView_);
-      this.editor_.focus();
-    }
-  });
-  
   cutBtn.addEventListener('click', () => {
     document.execCommand('cut');
     if (this.editor_) this.editor_.focus();
