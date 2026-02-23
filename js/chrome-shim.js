@@ -131,31 +131,31 @@
 
     restoreEntry: function(entryId, callback) {
       // Try to restore from IndexedDB
-      if (entryId && entryId.startsWith('retained_')) {
-        const name = entryId.replace('retained_', '');
-        const request = indexedDB.open('QuickTextFiles', 1);
-        request.onsuccess = function(event) {
-          const db = event.target.result;
-          const transaction = db.transaction(['files'], 'readonly');
-          const store = transaction.objectStore('files');
-          const get = store.get(name);
-          get.onsuccess = function() {
-            if (get.result && get.result.handle) {
-              // Verify the handle is still valid
-              get.result.handle.getFile().then(function() {
-                callback(get.result.handle);
-              }).catch(function() {
-                // Handle no longer valid
-                callback(null);
-              });
-            } else {
-              callback(null);
-            }
-          };
-        };
-      } else {
+      if (!entryId || !entryId.startsWith('retained_')) {
         callback(null);
+        return;
       }
+      
+      const name = entryId.replace('retained_', '');
+      const request = indexedDB.open('QuickTextFiles', 1);
+      
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['files'], 'readonly');
+        const store = transaction.objectStore('files');
+        const get = store.get(name);
+        
+        get.onsuccess = () => {
+          if (!get.result || !get.result.handle) {
+            callback(null);
+            return;
+          }
+          // Verify the handle is still valid
+          get.result.handle.getFile()
+            .then(() => callback(get.result.handle))
+            .catch(() => callback(null));
+        };
+      };
     },
 
     getWritableEntry: function(entry, callback) {
