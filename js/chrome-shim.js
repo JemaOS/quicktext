@@ -112,7 +112,7 @@
         var db = event.target.result;
         var transaction = db.transaction(['files'], 'readonly');
         var store = transaction.objectStore('files');
-        var getAll = store.getAll();
+        const getAll = store.getAll();
         getAll.onsuccess = function() {
           callback(getAll.result);
         };
@@ -132,13 +132,13 @@
     restoreEntry: function(entryId, callback) {
       // Try to restore from IndexedDB
       if (entryId && entryId.startsWith('retained_')) {
-        var name = entryId.replace('retained_', '');
+        const name = entryId.replace('retained_', '');
         var request = indexedDB.open('QuickTextFiles', 1);
         request.onsuccess = function(event) {
           var db = event.target.result;
           var transaction = db.transaction(['files'], 'readonly');
           var store = transaction.objectStore('files');
-          var get = store.get(name);
+          const get = store.get(name);
           get.onsuccess = function() {
             if (get.result && get.result.handle) {
               // Verify the handle is still valid
