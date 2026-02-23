@@ -1,28 +1,27 @@
 {
   "name": "QuickText",
   "short_name": "QuickText",
-  "description": "Editeur de texte rapide pour JemaOS",
+  "description": "Fast and simple text editor",
   "version": "1.0.2",
-  "start_url": "/index.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7376db",
+  "orientation": "any",
   "icons": [
     {
-      "src": "icon/96x96.png",
+      "src": "/icon/96x96.png",
       "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "icon/128x128.png",
+      "src": "/icon/128x128.png",
       "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "icon/256x256.png",
+      "src": "/icon/256x256.png",
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "maskable"
@@ -31,18 +30,63 @@
   "file_handlers": [
     {
       "action": "/",
-      "name": "Fichier texte",
+      "name": "Text File",
       "accept": {
         "text/plain": [".txt", ".text", ".log", ".md"]
       },
       "launch_type": "single-client"
+    },
+    {
+      "action": "/",
+      "name": "Markdown File",
+      "accept": {
+        "text/markdown": [".md", ".markdown"]
+      },
+      "launch_type": "single-client"
+    },
+    {
+      "action": "/",
+      "name": "HTML File",
+      "accept": {
+        "text/html": [".html", ".htm"]
+      },
+      "launch_type": "single-client"
+    },
+    {
+      "action": "/",
+      "name": "JSON File",
+      "accept": {
+        "application/json": [".json"]
+      },
+      "launch_type": "single-client"
+    },
+    {
+      "action": "/",
+      "name": "JavaScript File",
+      "accept": {
+        "application/javascript": [".js"]
+      },
+      "launch_type": "single-client"
+    },
+    {
+      "action": "/",
+      "name": "CSS File",
+      "accept": {
+        "text/css": [".css"]
+      },
+      "launch_type": "single-client"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "Nouveau fichier",
-      "url": "/index.html?action=new",
-      "icons": [{ "src": "icon/96x96.png", "sizes": "96x96" }]
-    }
-  ]
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    },
+    "accept": ["text/plain", "text/markdown", "text/html"]
+  },
+  "categories": ["utility", "textEditor"],
+  "prefer_related_applications": false
 }
