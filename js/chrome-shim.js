@@ -31,6 +31,10 @@
               }
             }]
           }).then(handle => {
+            // Store handle in IndexedDB for persistence
+            if (handle) {
+              chrome.fileSystem.retainPWAEntry(handle);
+            }
             callback(handle);
           }).catch(err => {
             console.log('File save cancelled:', err);
@@ -47,6 +51,10 @@
               }
             }]
           }).then(handles => {
+            // Store handles in IndexedDB for persistence
+            if (handles) {
+              handles.forEach(handle => chrome.fileSystem.retainPWAEntry(handle));
+            }
             if (params.acceptsMultiple) {
               callback(handles);
             } else {
@@ -71,15 +79,83 @@
       }
     },
 
+    // Store PWA file handles in IndexedDB for session persistence
+    retainPWAEntry: function(handle) {
+      if (!handle || !handle.name) return;
+      
+      // Open IndexedDB
+      var request = indexedDB.open('QuickTextFiles', 1);
+      request.onupgradeneeded = function(event) {
+        var db = event.target.result;
+        if (!db.objectStoreNames.contains('files')) {
+          db.createObjectStore('files', { keyPath: 'name' });
+        }
+      };
+      request.onsuccess = function(event) {
+        var db = event.target.result;
+        var transaction = db.transaction(['files'], 'readwrite');
+        var store = transaction.objectStore('files');
+        store.put({ name: handle.name, handle: handle, lastAccessed: Date.now() });
+      };
+    },
+
+    // Get all retained file handles
+    getRetainedEntries: function(callback) {
+      var request = indexedDB.open('QuickTextFiles', 1);
+      request.onupgradeneeded = function(event) {
+        var db = event.target.result;
+        if (!db.objectStoreNames.contains('files')) {
+          db.createObjectStore('files', { keyPath: 'name' });
+        }
+      };
+      request.onsuccess = function(event) {
+        var db = event.target.result;
+        var transaction = db.transaction(['files'], 'readonly');
+        var store = transaction.objectStore('files');
+        var getAll = store.getAll();
+        getAll.onsuccess = function() {
+          callback(getAll.result);
+        };
+      };
+    },
+
     retainEntry: function(entry) {
+      // For PWA entries, store in IndexedDB
+      if (entry && entry.name) {
+        chrome.fileSystem.retainPWAEntry(entry);
+        return 'retained_' + entry.name;
+      }
       // Return a simple ID for retention
       return 'retained_' + Date.now();
     },
 
     restoreEntry: function(entryId, callback) {
-      // In PWA, we can't truly restore entries across sessions easily
-      // This would need IndexedDB for proper implementation
-      callback(null);
+      // Try to restore from IndexedDB
+      if (entryId && entryId.startsWith('retained_')) {
+        var name = entryId.replace('retained_', '');
+        var request = indexedDB.open('QuickTextFiles', 1);
+        request.onsuccess = function(event) {
+          var db = event.target.result;
+          var transaction = db.transaction(['files'], 'readonly');
+          var store = transaction.objectStore('files');
+          var get = store.get(name);
+          get.onsuccess = function() {
+            if (get.result && get.result.handle) {
+              // Verify the handle is still valid
+              get.result.handle.getFile().then(function() {
+                callback(get.result.handle);
+              }).catch(function() {
+                // Handle no longer valid
+                callback(null);
+              });
+            } else {
+              callback(null);
+            }
+          };
+        };
+      } else {
+        callback(null);
+      }
     },
 
     getWritableEntry: function(entry, callback) {
@@ -233,20 +309,40 @@
             // Hide custom window controls in PWA
             app.setHasChromeFrame(true);
             
-            // Check if there are files to open from Launch Queue
-            const launchFilesStr = sessionStorage.getItem('quicktext_launch_files');
-            if (launchFilesStr) {
-              try {
-                const files = JSON.parse(launchFilesStr);
-                sessionStorage.removeItem('quicktext_launch_files');
-                // We would need to restore handles here, but for now just open empty
-                app.openTabs([]);
-              } catch (e) {
-                app.openTabs([]);
-              }
-            } else {
-              app.openTabs([]);
-            }
+            // Restore retained file entries from IndexedDB
+            chrome.fileSystem.getRetainedEntries(function(entries) {
+              console.log('Restoring retained entries:', entries);
+              
+              // Convert stored handles to entry format for the app
+              var restoredEntries = [];
+              entries.forEach(function(entry) {
+                if (entry.handle && entry.handle.getFile) {
+                  // Verify handle is still valid
+                  entry.handle.getFile().then(function() {
+                    restoredEntries.push(entry.handle);
+                  }).catch(function() {
+                    // Handle no longer valid, skip
+                  });
+                }
+              });
+              
+              // Wait a bit for all handles to be verified
+              setTimeout(function() {
+                // Check if there are files to open from Launch Queue
+                const launchFilesStr = sessionStorage.getItem('quicktext_launch_files');
+                if (launchFilesStr) {
+                  try {
+                    const files = JSON.parse(launchFilesStr);
+                    sessionStorage.removeItem('quicktext_launch_files');
+                    app.openTabs([]);
+                  } catch (e) {
+                    app.openTabs(restoredEntries);
+                  }
+                } else {
+                  app.openTabs(restoredEntries);
+                }
+              }, 100);
+            });
           },
           newWindow: function() {
             window.open(window.location.href, '_blank');
@@ -289,6 +385,9 @@
                 })).then(files => {
                   sessionStorage.setItem('quicktext_launch_files', JSON.stringify(files));
                 });
+              } else {
+                // Check if we should open retained files
+                // This is handled in onWindowReady
               }
             });
           }
@@ -312,6 +411,21 @@
       }
     }
   };
+
+  // Handle PWA window close - save retained files
+  window.addEventListener('beforeunload', function(e) {
+    // Get all open tabs and retain their file handles
+    if (window.textApp && window.textApp.tabs_) {
+      var tabs = window.textApp.tabs_;
+      for (var i = 0; i < tabs.tabs_.length; i++) {
+        var entry = tabs.tabs_[i].getEntry();
+        if (entry && entry.name) {
+          chrome.fileSystem.retainPWAEntry(entry);
+          console.log('Retained file on close:', entry.name);
+        }
+      }
+    }
+  });
 
   // Shim for FileError
   window.FileError = function(code) {

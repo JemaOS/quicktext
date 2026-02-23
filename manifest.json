@@ -1,75 +1,71 @@
 {
-  "comment": "Copyright (c) 2025 Jema Technology. Optimized for ChromiumOS R132.",
-  "name": "QuickText - JemaOS Text Editor",
+  "name": "QuickText",
   "short_name": "QuickText",
-  "description": "Fast and simple text editor for JemaOS",
-  "version": "1.1.0",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Editeur de texte rapide pour JemaOS",
+  "version": "1.0.0",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7376db",
-  "orientation": "any",
   "icons": [
     {
-      "src": "icon/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icon/96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
       "purpose": "any"
     },
-    { "src": "icon/16x16.png", "sizes": "16x16", "type": "image/png" },
-    { "src": "icon/32x32.png", "sizes": "32x32", "type": "image/png" },
-    { "src": "icon/48x48.png", "sizes": "48x48", "type": "image/png" },
-    { "src": "icon/64x64.png", "sizes": "64x64", "type": "image/png" },
-    { "src": "icon/128x128.png", "sizes": "128x128", "type": "image/png" },
-    { "src": "icon/256x256.png", "sizes": "256x256", "type": "image/png", "purpose": "maskable" }
-  ],
-  "shortcuts": [
     {
-      "name": "Nouveau fichier texte",
-      "short_name": "Nouveau",
-      "description": "Créer un nouveau document texte immédiatement",
-      "url": "./index.html?action=new",
-      "icons": [{ "src": "icon/96x96.png", "sizes": "96x96" }]
+      "src": "icon/128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon/256x256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "file_handlers": [
     {
-      "action": "./index.html",
-      "name": "QuickText Editor",
+      "action": "/",
+      "name": "Fichier texte",
       "accept": {
-        "text/plain": [".txt", ".text", ".log"],
-        "text/markdown": [".md", ".markdown"],
-        "text/html": [".html", ".htm"],
-        "application/json": [".json"],
-        "application/javascript": [".js"],
-        "text/css": [".css"]
+        "text/plain": [".txt"]
       },
       "icons": [
-        { "src": "icon/32x32.png", "sizes": "32x32", "type": "image/png" }
+        {
+          "src": "icon/96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    },
+    {
+      "action": "/",
+      "name": "Document Markdown",
+      "accept": {
+        "text/markdown": [".md"]
+      },
+      "icons": [
+        {
+          "src": "icon/96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
       ],
       "launch_type": "single-client"
     }
   ],
-  "share_target": {
-    "action": "./index.html",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    },
-    "accept": ["text/plain", "text/markdown", "text/html"]
-  },
-  "protocol_handlers": [
+  "shortcuts": [
     {
-      "protocol": "web+quicktext",
-      "url": "./index.html?file=%s"
+      "name": "Nouveau fichier",
+      "url": "/?action=new",
+      "icons": [{ "src": "icon/96x96.png", "sizes": "96x96" }]
     }
   ],
-  "categories": ["utility", "textEditor"],
-  "prefer_related_applications": false,
-  "permissions": [
-    "fileSystem"
-  ]
+  "categories": ["utility", "textEditor"]
 }
