@@ -57,7 +57,7 @@
       "src": "icon/256x256.png",
       "sizes": "256x256",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "file_handlers": [
@@ -66,7 +66,7 @@
       "accept": {
         "text/plain": [".txt", ".text", ".log"]
       },
-      "launch_type": "new-file",
+      "launch_type": "single-client",
       "icons": {
         "16": "icon/16x16.png",
         "32": "icon/32x32.png",
@@ -81,7 +81,7 @@
       "accept": {
         "text/markdown": [".md", ".markdown"]
       },
-      "launch_type": "new-file",
+      "launch_type": "single-client",
       "icons": {
         "16": "icon/16x16.png",
         "32": "icon/32x32.png",
@@ -96,7 +96,7 @@
       "accept": {
         "text/html": [".html", ".htm"]
       },
-      "launch_type": "new-file",
+      "launch_type": "single-client",
       "icons": {
         "16": "icon/16x16.png",
         "32": "icon/32x32.png",
@@ -111,7 +111,7 @@
       "accept": {
         "application/json": [".json"]
       },
-      "launch_type": "new-file",
+      "launch_type": "single-client",
       "icons": {
         "16": "icon/16x16.png",
         "32": "icon/32x32.png",
@@ -126,7 +126,7 @@
       "accept": {
         "application/javascript": [".js"]
       },
-      "launch_type": "new-file",
+      "launch_type": "single-client",
       "icons": {
         "16": "icon/16x16.png",
         "32": "icon/32x32.png",
@@ -141,7 +141,7 @@
       "accept": {
         "text/css": [".css"]
       },
-      "launch_type": "new-file",
+      "launch_type": "single-client",
       "icons": {
         "16": "icon/16x16.png",
         "32": "icon/32x32.png",
@@ -164,7 +164,7 @@
   },
   "protocol_handlers": [
     {
-      "protocol": "quicktext",
+      "protocol": "web+quicktext",
       "url": "/?file=%s"
     }
   ],
