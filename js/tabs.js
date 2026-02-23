@@ -462,7 +462,7 @@ Tabs.prototype.saveAs = function(opt_tab, opt_callback) {
 Tabs.prototype.getFilesToRetain = function() {
   let toRetain = [];
 
-  for (i = 0; i < this.tabs_.length; i++) {
+  for (let i = 0; i < this.tabs_.length; i++) {
     if (this.tabs_[i].getEntry()) {
       toRetain.push(this.tabs_[i].getEntry());
     }
