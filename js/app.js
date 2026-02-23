@@ -42,7 +42,7 @@ TextApp.prototype.init = function() {
  * @param {!Array.<FileEntry>} entries The file entries to be opened.
  */
 TextApp.prototype.openTabs = function(entries) {
-  for (var i = 0; i < entries.length; i++) {
+  for (let i = 0; i < entries.length; i++) {
     this.tabs_.openFileEntry(entries[i]);
   }
   this.windowController_.focus_();
@@ -64,7 +64,7 @@ TextApp.prototype.getFilesToRetain = function() {
 };
 
 TextApp.prototype.setTheme = function() {
-  var theme = this.settings_.get('theme');
+  const theme = this.settings_.get('theme');
 
   this.windowController_.setTheme(theme);
   this.editor_.setTheme(theme);

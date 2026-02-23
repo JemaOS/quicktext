@@ -83,7 +83,7 @@ util.sanitizeFileName = function(fileName) {
  * Returns the extension of a File Name or null if there's none.
  */
 util.getExtension = function(fileName) {
-  var match = /\.([^.\\\/]+)$/.exec(fileName);
+  const match = /\.([^.\\\/]+)$/.exec(fileName);
 
   if (match) {
     return match[1];
