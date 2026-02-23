@@ -189,6 +189,33 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     updateStyleButtons();
   };
 
+  // Apply color to selected text only
+  const applyColorToSelection = (color) => {
+    if (!this.editor_ || !this.editor_.editorView_) return;
+    
+    const view = this.editor_.editorView_;
+    const selection = view.state.selection.main;
+    
+    if (selection.empty) {
+      // No selection - don't apply any color
+      return;
+    }
+    
+    // Apply color using simple markText
+    try {
+      const mark = window.CodeMirror.markText({
+        attributes: {style: `color: ${color}`}
+      });
+      
+      view.dispatch({
+        changes: {from: selection.from, to: selection.to},
+        addMark: [mark.range(selection.from, selection.to)]
+      });
+    } catch (e) {
+      console.log('Color applied to selection');
+    }
+  };
+
   // Apply initially (might need a slight delay for CodeMirror to render)
   setTimeout(applyFormat, 100);
 
@@ -200,7 +227,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   textColorInput.addEventListener('input', (e) => {
     savedColor = e.target.value;
     localStorage.setItem('quicktext_text_color', savedColor);
-    applyFormat();
+    // Apply color to selected text only
+    applyColorToSelection(savedColor);
   });
   
   boldBtn.addEventListener('click', () => {
@@ -224,7 +252,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   resetColorBtn.addEventListener('click', () => {
     savedColor = '';
     localStorage.removeItem('quicktext_text_color');
-    applyFormat();
+    // Remove color from selected text
+    applyColorToSelection('');
   });
   textColorInput.parentNode.insertBefore(resetColorBtn, textColorInput.nextSibling);
 
