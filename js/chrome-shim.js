@@ -310,8 +310,10 @@
             app.setHasChromeFrame(true);
             
             // Restore retained file entries from IndexedDB
+            console.log('Attempting to restore retained entries...');
             chrome.fileSystem.getRetainedEntries(function(entries) {
               console.log('Restoring retained entries:', entries);
+              console.log('Number of entries found:', entries ? entries.length : 0);
               
               // Convert stored handles to entry format for the app
               var restoredEntries = [];
@@ -435,12 +437,24 @@
 
   // Handle PWA window close - save retained files
   window.addEventListener('beforeunload', function(e) {
+    console.log('Window closing - saving files');
     // Get all open tabs and retain their file handles
     if (window.textApp && window.textApp.tabs_) {
       var tabs = window.textApp.tabs_;
       for (var i = 0; i < tabs.tabs_.length; i++) {
-        var entry = tabs.tabs_[i].getEntry();
+        var tab = tabs.tabs_[i];
+        var entry = tab.getEntry();
         if (entry && entry.name) {
+          // Save the file first if it has unsaved changes
+          if (!tab.isSaved() && entry.createWritable) {
+            var content = tab.getContent_();
+            if (window.writeFileEntry) {
+              window.writeFileEntry(entry, content, function() {
+                console.log('Saved on close:', entry.name);
+              });
+            }
+          }
+          // Then retain the entry
           chrome.fileSystem.retainPWAEntry(entry);
           console.log('Retained file on close:', entry.name);
         }

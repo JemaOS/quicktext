@@ -47,14 +47,14 @@
     }
   ],
   "share_target": {
-    "action": "/",
+    "action": "./",
     "method": "GET",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
     },
-    "accept": ["text/plain", "text/markdown", "text/html"]
+    "accept": ["text/plain", "text/markdown", "text/html", "text/*"]
   },
   "categories": ["utility", "textEditor"],
   "prefer_related_applications": false
