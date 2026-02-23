@@ -341,8 +341,8 @@
             
             // Restore all tabs from localStorage (including unsaved ones)
             console.log('Attempting to restore all tabs...');
-            var savedTabsStr = localStorage.getItem('quicktext_open_tabs');
-            var savedTabs = null;
+            const savedTabsStr = localStorage.getItem('quicktext_open_tabs');
+            const savedTabs = null;
             try {
               savedTabs = savedTabsStr ? JSON.parse(savedTabsStr) : null;
             } catch(e) {
@@ -355,7 +355,7 @@
               app.openTabs([]);
               
               setTimeout(function() {
-                var currentTabId = null;
+                const currentTabId = null;
                 // Find which tab was current
                 savedTabs.forEach(function(tabData) {
                   if (tabData.isCurrent) currentTabId = tabData.id;
@@ -365,7 +365,7 @@
                 // For unsaved tabs, restore content directly
                 chrome.fileSystem.getRetainedEntries(function(retainedEntries) {
                   // Build a map of retained entries by name
-                  var retainedByName = {};
+                  const retainedByName = {};
                   retainedEntries.forEach(function(e) {
                     if (e.handle && e.handle.name) {
                       retainedByName[e.handle.name] = e.handle;
@@ -373,15 +373,15 @@
                   });
                   
                   // Restore each tab
-                  var tabsToRestore = savedTabs.slice(); // copy
-                  var restoredCount = 0;
+                  const tabsToRestore = savedTabs.slice(); // copy
+                  const restoredCount = 0;
                   
                   function restoreNextTab(index) {
                     if (index >= tabsToRestore.length) {
                       // All tabs restored - switch to the previously active tab
                       if (app.tabs_ && app.tabs_.tabs_.length > 0) {
                         // Remove the initial empty tab if it exists and we have restored tabs
-                        var initialTab = app.tabs_.tabs_[0];
+                        const initialTab = app.tabs_.tabs_[0];
                         if (initialTab && !initialTab.getEntry() &&
                             initialTab.session_ && initialTab.session_.doc.toString() === '' &&
                             app.tabs_.tabs_.length > 1) {
@@ -392,11 +392,11 @@
                       return;
                     }
                     
-                    var tabData = tabsToRestore[index];
+                    const tabData = tabsToRestore[index];
                     
                     if (tabData.hasEntry && tabData.entryName && retainedByName[tabData.entryName]) {
                       // Restore tab with file entry
-                      var handle = retainedByName[tabData.entryName];
+                      const handle = retainedByName[tabData.entryName];
                       handle.getFile().then(function(file) {
                         return file.text();
                       }).then(function(content) {
@@ -431,8 +431,8 @@
               // No saved tabs - restore retained file entries from IndexedDB
               console.log('No saved tabs found, restoring retained file entries...');
               chrome.fileSystem.getRetainedEntries(function(entries) {
-                var restoredEntries = [];
-                var pending = entries.length;
+                const restoredEntries = [];
+                const pending = entries.length;
                 
                 if (pending === 0) {
                   app.openTabs([]);
@@ -534,14 +534,14 @@
   // Called on beforeunload and visibilitychange
   window.saveAllTabsToStorage = function saveAllTabsToStorage() {
     if (!window.textApp || !window.textApp.tabs_) return;
-    var tabsObj = window.textApp.tabs_;
+    const tabsObj = window.textApp.tabs_;
     if (typeof tabsObj.saveAllTabsToLocalStorage_ === 'function') {
       tabsObj.saveAllTabsToLocalStorage_();
     }
     // Also retain file entries in IndexedDB
     for (var i = 0; i < tabsObj.tabs_.length; i++) {
       var tab = tabsObj.tabs_[i];
-      var entry = tab.getEntry();
+      const entry = tab.getEntry();
       if (entry && entry.name) {
         chrome.fileSystem.retainPWAEntry(entry);
       }
