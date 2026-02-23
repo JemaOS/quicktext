@@ -119,6 +119,20 @@
       };
     },
 
+    // Delete a file entry from IndexedDB
+    deleteFileEntry: function(fileName, callback) {
+      const request = indexedDB.open('QuickTextFiles', 1);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(['files'], 'readwrite');
+        const store = transaction.objectStore('files');
+        store.delete(fileName);
+        transaction.oncomplete = function() {
+          if (callback) callback(true);
+        };
+      };
+    },
+
     retainEntry: function(entry) {
       // For PWA entries, store in IndexedDB
       if (entry && entry.name) {
