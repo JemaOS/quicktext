@@ -139,21 +139,24 @@
       const name = entryId.replace('retained_', '');
       const request = indexedDB.open('QuickTextFiles', 1);
       
-      request.onsuccess = (event) => {
+      request.onsuccess = async (event) => {
         const db = event.target.result;
         const transaction = db.transaction(['files'], 'readonly');
         const store = transaction.objectStore('files');
         const get = store.get(name);
         
-        get.onsuccess = () => {
+        get.onsuccess = async () => {
           if (!get.result || !get.result.handle) {
             callback(null);
             return;
           }
           // Verify the handle is still valid
-          get.result.handle.getFile()
-            .then(() => callback(get.result.handle))
-            .catch(() => callback(null));
+          try {
+            await get.result.handle.getFile();
+            callback(get.result.handle);
+          } catch (e) {
+            callback(null);
+          }
         };
       };
     },
