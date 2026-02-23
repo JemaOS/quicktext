@@ -142,6 +142,10 @@ async function handleFileOpen(request) {
 
 // Handle messages from the main app
 self.addEventListener('message', (event) => {
+  // Verify the origin of the message for security
+  if (!event.origin || event.origin !== self.location.origin) {
+    return;
+  }
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
