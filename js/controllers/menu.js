@@ -8,7 +8,6 @@ function MenuController(tabs) {
   this.dragItem_ = null;
   $('#file-menu-new').click(this.newTab_.bind(this));
   $('#file-menu-open').click(this.open_.bind(this));
-  $('#file-menu-save').click(this.save_.bind(this));
   $('#file-menu-saveas').click(this.saveas_.bind(this));
   $('#open-shortcuts').click(this.openShortcuts_.bind(this));
   $(document).bind('newtab', this.addNewTab_.bind(this));
