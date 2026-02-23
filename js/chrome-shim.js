@@ -84,34 +84,34 @@
       if (!handle || !handle.name) return;
       
       // Open IndexedDB
-      var request = indexedDB.open('QuickTextFiles', 1);
+      const request = indexedDB.open('QuickTextFiles', 1);
       request.onupgradeneeded = function(event) {
-        var db = event.target.result;
+        const db = event.target.result;
         if (!db.objectStoreNames.contains('files')) {
           db.createObjectStore('files', { keyPath: 'name' });
         }
       };
       request.onsuccess = function(event) {
-        var db = event.target.result;
-        var transaction = db.transaction(['files'], 'readwrite');
-        var store = transaction.objectStore('files');
+        const db = event.target.result;
+        const transaction = db.transaction(['files'], 'readwrite');
+        const store = transaction.objectStore('files');
         store.put({ name: handle.name, handle: handle, lastAccessed: Date.now() });
       };
     },
 
     // Get all retained file handles
     getRetainedEntries: function(callback) {
-      var request = indexedDB.open('QuickTextFiles', 1);
+      const request = indexedDB.open('QuickTextFiles', 1);
       request.onupgradeneeded = function(event) {
-        var db = event.target.result;
+        const db = event.target.result;
         if (!db.objectStoreNames.contains('files')) {
           db.createObjectStore('files', { keyPath: 'name' });
         }
       };
       request.onsuccess = function(event) {
-        var db = event.target.result;
-        var transaction = db.transaction(['files'], 'readonly');
-        var store = transaction.objectStore('files');
+        const db = event.target.result;
+        const transaction = db.transaction(['files'], 'readonly');
+        const store = transaction.objectStore('files');
         const getAll = store.getAll();
         getAll.onsuccess = function() {
           callback(getAll.result);
@@ -133,11 +133,11 @@
       // Try to restore from IndexedDB
       if (entryId && entryId.startsWith('retained_')) {
         const name = entryId.replace('retained_', '');
-        var request = indexedDB.open('QuickTextFiles', 1);
+        const request = indexedDB.open('QuickTextFiles', 1);
         request.onsuccess = function(event) {
-          var db = event.target.result;
-          var transaction = db.transaction(['files'], 'readonly');
-          var store = transaction.objectStore('files');
+          const db = event.target.result;
+          const transaction = db.transaction(['files'], 'readonly');
+          const store = transaction.objectStore('files');
           const get = store.get(name);
           get.onsuccess = function() {
             if (get.result && get.result.handle) {
@@ -407,7 +407,7 @@
                         // File no longer accessible, restore as unsaved with last content
                         app.tabs_.newTab(tabData.content || '');
                         if (tabData.customName) {
-                          var newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                          const newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
                           if (newTab) newTab.setName(tabData.customName);
                         }
                         restoreNextTab(index + 1);
@@ -416,7 +416,7 @@
                       // Restore unsaved tab with its content
                       app.tabs_.newTab(tabData.content || '');
                       // Restore custom name if any
-                      var newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                      const newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
                       if (newTab && tabData.customName) {
                         newTab.setName(tabData.customName);
                       }
@@ -539,8 +539,8 @@
       tabsObj.saveAllTabsToLocalStorage_();
     }
     // Also retain file entries in IndexedDB
-    for (var i = 0; i < tabsObj.tabs_.length; i++) {
-      var tab = tabsObj.tabs_[i];
+    for (let i = 0; i < tabsObj.tabs_.length; i++) {
+      const tab = tabsObj.tabs_[i];
       const entry = tab.getEntry();
       if (entry && entry.name) {
         chrome.fileSystem.retainPWAEntry(entry);

@@ -66,7 +66,7 @@ Background.prototype.launch = function(launchData) {
   const entries = [];
   chrome.storage.local.get('retainedEntryIds', function(data) {
     const retainedEntryIds = data['retainedEntryIds'] || [];
-    for (var i = 0; i < retainedEntryIds.length; i++) {
+    for (let i = 0; i < retainedEntryIds.length; i++) {
       chrome.fileSystem.restoreEntry(retainedEntryIds[i], function(entry) {
         if (!chrome.runtime.lastError) {
           this.entriesToOpen_.push(entry);
@@ -76,14 +76,14 @@ Background.prototype.launch = function(launchData) {
   }.bind(this));
 
   if (launchData && launchData['items']) {
-    for (var i = 0; i < launchData['items'].length; i++) {
+    for (let i = 0; i < launchData['items'].length; i++) {
       entries.push(launchData['items'][i]['entry']);
     }
   }
 
   this.focusWindow(0);
 
-  for (var i = 0; i < entries.length; i++) {
+  for (let i = 0; i < entries.length; i++) {
     chrome.fileSystem.getWritableEntry(
         entries[i],
         function(entry) {
@@ -108,7 +108,7 @@ Background.prototype.onWindowClosed = function(win) {
     return;
   }
   const textApp = win.contentWindow.textApp;
-  for (var i = 0; i < this.windows_.length; i++) {
+  for (let i = 0; i < this.windows_.length; i++) {
     if (textApp === this.windows_[i]) {
       this.windows_.splice(i, 1);
     }
@@ -124,7 +124,7 @@ Background.prototype.onWindowClosed = function(win) {
 Background.prototype.retainFiles_ = function(toRetain) {
   console.log('Got ' + toRetain.length + ' files to retain:', toRetain);
   const toRetainEntryIds = [];
-  for (var i = 0; i < toRetain.length; i++) {
+  for (let i = 0; i < toRetain.length; i++) {
     const entryId = chrome.fileSystem.retainEntry(toRetain[i]);
     toRetainEntryIds.push(entryId);
   }
@@ -151,7 +151,7 @@ Background.prototype.copyFileEntry = function(entry, callback) {
   chrome.fileSystem.getWritableEntry(entry, callback);
 };
 
-var background = new Background();
+const background = new Background();
 chrome.app.runtime.onLaunched.addListener(background.launch.bind(background));
 
 

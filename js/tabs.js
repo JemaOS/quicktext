@@ -297,7 +297,7 @@ Tabs.prototype.close = function(tabId) {
     return;
   }
 
-  var tab = this.tabs_[i];
+  const tab = this.tabs_[i];
 
   if (!tab.isSaved()) {
     this.promptSave_(tab, function(answer) {
@@ -502,11 +502,11 @@ Tabs.prototype.openFileEntry = function(entry) {
  * @param {Object} entry - PWA file entry with handle
  */
 Tabs.prototype.openPWAFileEntry = function(entry) {
-  var self = this;
+  const self = this;
   
   // Check if already open
-  for (var i = 0; i < this.tabs_.length; i++) {
-    var tab = this.tabs_[i];
+  for (let i = 0; i < this.tabs_.length; i++) {
+    const tab = this.tabs_[i];
     if (tab.getEntry() && tab.getEntry().name === entry.name) {
       this.showTab(tab.getId());
       return;
@@ -564,7 +564,7 @@ Tabs.prototype.modeAutoSet = function(tab) {
   // Only set the mode if it's the current tab. The mode for non-current tabs
   // will update when they become the current tab.
   if (tab !== this.currentTab_) return;
-  var extension = tab.getExtension();
+  const extension = tab.getExtension();
   if (extension) {
     this.editor_.updateMode(extension);
   }
@@ -572,11 +572,11 @@ Tabs.prototype.modeAutoSet = function(tab) {
 
 Tabs.prototype.readFileToNewTab_ = function(entry, file) {
   $.event.trigger('loadingfile');
-  var self = this;
+  const self = this;
   
   // Handle PWA File System Access API (entry.getFile) vs Chrome API (entry.file)
-  var readContent = function(fileObj) {
-    var reader = new FileReader();
+  const readContent = function(fileObj) {
+    const reader = new FileReader();
     reader.onerror = util.handleFSError;
     reader.onloadend = function(e) {
       // Mark as PWA file for later saving
@@ -643,11 +643,11 @@ Tabs.prototype.saveAllTabsToLocalStorage_ = function() {
     // Update current tab state first to get latest content
     this.updateCurrentTabState_();
     
-    var tabsData = [];
-    for (var i = 0; i < this.tabs_.length; i++) {
-      var tab = this.tabs_[i];
-      var entry = tab.getEntry();
-      var content = tab.session_ ? tab.session_.doc.toString() : '';
+    const tabsData = [];
+    for (let i = 0; i < this.tabs_.length; i++) {
+      const tab = this.tabs_[i];
+      const entry = tab.getEntry();
+      const content = tab.session_ ? tab.session_.doc.toString() : '';
       tabsData.push({
         id: tab.getId(),
         name: tab.getName(),
@@ -668,8 +668,8 @@ Tabs.prototype.saveAllTabsToLocalStorage_ = function() {
  * Schedule an auto-save after user stops typing
  */
 Tabs.prototype.scheduleAutoSave_ = function() {
-  var self = this;
-  var tab = this.currentTab_;
+  const self = this;
+  const tab = this.currentTab_;
   
   // Only auto-save if tab has an entry (saved file)
   if (!tab || !tab.getEntry()) return;
