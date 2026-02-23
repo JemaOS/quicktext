@@ -1,10 +1,9 @@
 {
   "name": "QuickText",
   "short_name": "QuickText",
-  "description": "Editeur de texte rapide pour JemaOS",
   "version": "1.0.0",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7376db",
@@ -12,26 +11,23 @@
     {
       "src": "icon/96x96.png",
       "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "icon/128x128.png",
       "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "icon/256x256.png",
       "sizes": "256x256",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ],
   "file_handlers": [
     {
-      "action": "/",
-      "name": "Fichier texte",
+      "action": "index.html",
+      "name": "Nouveau fichier texte",
       "accept": {
         "text/plain": [".txt"]
       },
@@ -41,31 +37,7 @@
           "sizes": "96x96",
           "type": "image/png"
         }
-      ],
-      "launch_type": "single-client"
-    },
-    {
-      "action": "/",
-      "name": "Document Markdown",
-      "accept": {
-        "text/markdown": [".md"]
-      },
-      "icons": [
-        {
-          "src": "icon/96x96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ],
-      "launch_type": "single-client"
+      ]
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Nouveau fichier",
-      "url": "/?action=new",
-      "icons": [{ "src": "icon/96x96.png", "sizes": "96x96" }]
-    }
-  ],
-  "categories": ["utility", "textEditor"]
+  ]
 }
