@@ -29,50 +29,19 @@
   ],
   "file_handlers": [
     {
-      "action": "/",
-      "name": "Text File",
+      "action": "./",
+      "name": "QuickText Document",
       "accept": {
-        "text/plain": [".txt", ".text", ".log", ".md"]
-      },
-      "launch_type": "single-client"
-    },
-    {
-      "action": "/",
-      "name": "Markdown File",
-      "accept": {
-        "text/markdown": [".md", ".markdown"]
-      },
-      "launch_type": "single-client"
-    },
-    {
-      "action": "/",
-      "name": "HTML File",
-      "accept": {
-        "text/html": [".html", ".htm"]
-      },
-      "launch_type": "single-client"
-    },
-    {
-      "action": "/",
-      "name": "JSON File",
-      "accept": {
-        "application/json": [".json"]
-      },
-      "launch_type": "single-client"
-    },
-    {
-      "action": "/",
-      "name": "JavaScript File",
-      "accept": {
-        "application/javascript": [".js"]
-      },
-      "launch_type": "single-client"
-    },
-    {
-      "action": "/",
-      "name": "CSS File",
-      "accept": {
-        "text/css": [".css"]
+        "text/plain": [".txt", ".text", ".log", ".conf", ".ini", ".cfg", ".env"],
+        "text/markdown": [".md", ".markdown"],
+        "text/html": [".html", ".htm", ".xhtml"],
+        "text/css": [".css", ".scss", ".less"],
+        "text/javascript": [".js", ".mjs", ".jsx"],
+        "application/typescript": [".ts", ".tsx"],
+        "application/json": [".json", ".map"],
+        "application/xml": [".xml"],
+        "text/csv": [".csv"],
+        "application/x-sh": [".sh", ".bash"]
       },
       "launch_type": "single-client"
     }
