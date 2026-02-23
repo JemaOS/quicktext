@@ -29,13 +29,6 @@
         <ul id="file-menu">
           <li>
             <button
-                id="file-menu-install"
-                class="sidebar-button"
-                i18n-content="fileMenuInstall">
-            </button>
-          </li>
-          <li>
-            <button
                 id="file-menu-new"
                 class="sidebar-button"
                 i18n-content="fileMenuNew">
@@ -319,9 +312,6 @@
       // Stash the event so it can be triggered later
       deferredPrompt = e;
       console.log('PWA install prompt available');
-      // Show install button in menu
-      const installBtn = document.getElementById('file-menu-install');
-      if (installBtn) installBtn.style.display = 'flex';
       // Show install button in search bar
       const searchInstallBtn = document.getElementById('pwa-install-search');
       if (searchInstallBtn) searchInstallBtn.style.display = 'flex';
@@ -330,12 +320,8 @@
     // Also show install button after a delay if beforeinstallprompt didn't fire
     // (some browsers or environments don't fire this event)
     setTimeout(() => {
-      const installBtn = document.getElementById('file-menu-install');
       const searchInstallBtn = document.getElementById('pwa-install-search');
-      // Show buttons if they're still hidden (prompt didn't fire but PWA might be installable)
-      if (installBtn && installBtn.style.display === 'none' && !window.matchMedia('(display-mode: standalone)').matches) {
-        installBtn.style.display = 'flex';
-      }
+      // Show button if still hidden and not already installed
       if (searchInstallBtn && searchInstallBtn.style.display === 'none' && !window.matchMedia('(display-mode: standalone)').matches) {
         searchInstallBtn.style.display = 'flex';
       }
@@ -361,13 +347,6 @@
 
     // Add install button click handler
     document.addEventListener('DOMContentLoaded', () => {
-      const installBtn = document.getElementById('file-menu-install');
-      if (installBtn) {
-        installBtn.style.display = 'none'; // Hide by default
-        installBtn.addEventListener('click', () => {
-          window.showInstallPrompt();
-        });
-      }
       // Add click handler for search bar install button
       const searchInstallBtn = document.getElementById('pwa-install-search');
       if (searchInstallBtn) {
