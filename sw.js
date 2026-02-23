@@ -89,20 +89,20 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
 
-        return fetch(event.request).then((response) => {
+        return fetch(event.request).then((networkResponse) => {
           // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
           }
 
           // Clone the response for caching
-          const responseToCache = response.clone();
+          const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
             });
 
-          return response;
+          return networkResponse;
         });
       })
       .catch(() => {
