@@ -95,9 +95,8 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
 
-          // Clone the response
+          // Clone the response for caching
           const responseToCache = response.clone();
-
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
