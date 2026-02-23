@@ -191,28 +191,26 @@ TextApp.prototype.setupFormatToolbar_ = function() {
 
   // Apply color to selected text only
   const applyColorToSelection = (color) => {
-    if (!this.editor_ || !this.editor_.editorView_) return;
-    
-    const view = this.editor_.editorView_;
-    const selection = view.state.selection.main;
-    
-    if (selection.empty) {
-      // No selection - don't apply any color
-      return;
-    }
-    
-    // Apply color using simple markText
     try {
-      const mark = window.CodeMirror.markText({
-        attributes: {style: `color: ${color}`}
-      });
+      // Get browser selection
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
       
-      view.dispatch({
-        changes: {from: selection.from, to: selection.to},
-        addMark: [mark.range(selection.from, selection.to)]
-      });
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return; // No actual selection
+      
+      // Wrap selection in a span with the color
+      const span = document.createElement('span');
+      span.style.color = color;
+      span.textContent = range.toString();
+      
+      range.deleteContents();
+      range.insertNode(span);
+      
+      // Clear selection after applying
+      selection.removeAllRanges();
     } catch (e) {
-      console.log('Color applied to selection');
+      console.error('Error applying color to selection:', e);
     }
   };
 
@@ -227,8 +225,18 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   textColorInput.addEventListener('input', (e) => {
     savedColor = e.target.value;
     localStorage.setItem('quicktext_text_color', savedColor);
-    // Apply color to selected text only
-    applyColorToSelection(savedColor);
+    
+    // Check if there's a text selection
+    const hasSelection = window.getSelection().toString().length > 0;
+    
+    if (hasSelection) {
+      // Apply color to selected text only
+      applyColorToSelection(savedColor);
+    } else {
+      // No selection - set color for future typing (like Google Docs)
+      // This will apply to newly typed text
+      applyFormat();
+    }
   });
   
   boldBtn.addEventListener('click', () => {
