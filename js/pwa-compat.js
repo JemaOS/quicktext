@@ -180,7 +180,7 @@ const PWACompat = (function() {
         entry.createWriter(function(writer) {
           writer.onwrite = callback;
           writer.onerror = errorCallback;
-          var blob = new Blob([content], {type: 'text/plain'});
+          const blob = new Blob([content], {type: 'text/plain'});
           writer.write(blob);
         });
       }
