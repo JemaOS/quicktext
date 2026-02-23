@@ -203,19 +203,23 @@ TextApp.prototype.setupFormatToolbar_ = function() {
         return;
       }
       
-      // Use CodeMirror 6's Text.replace method to wrap selected text with color span
-      const doc = state.doc;
-      const selectedText = doc.sliceString(selection.from, selection.to);
+      // For CodeMirror 6, we need to use decorators properly
+      // Create a decoration for the text color
+      const { Decoration } = window.CodeMirror;
       
-      // Wrap selected text with <span> tag with color style
-      const coloredText = `<span style="color: ${color}">${selectedText}</span>`;
+      const textColorDecoration = Decoration.mark({
+        attributes: { style: `color: ${color}` }
+      });
+      
+      // Apply the decoration to the selected range
+      const range = textColorDecoration.range(selection.from, selection.to);
       
       view.dispatch({
-        changes: {
-          from: selection.from,
-          to: selection.to,
-          insert: coloredText
-        }
+        effects: [
+          window.CodeMirror.view.EditorView.setDecorations.of({
+            range
+          })
+        ]
       });
       
     } catch (e) {
