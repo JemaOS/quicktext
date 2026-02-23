@@ -19,14 +19,14 @@
  * with minor tweaks to support chrome.i18n.
  */
 
-var i18nTemplate = (function() {
+const i18nTemplate = (function() {
   /**
    * This provides the handlers for the templating engine. The key is used as
    * the attribute name and the value is the function that gets called for every
    * single node that has this attribute.
    * @type {Object}
    */
-  var handlers = {
+  const handlers = {
     /**
      * This handler sets the textContent of the element.
      * @param {HTMLElement} element The node to modify.
@@ -47,27 +47,27 @@ var i18nTemplate = (function() {
      *     Multiple attribute/key pairs may be separated by semicolons.
      */
     'i18n-values': function(element, attributeAndKeys) {
-      var parts = attributeAndKeys.replace(/\s/g, '').split(/;/);
+      let parts = attributeAndKeys.replace(/\s/g, '').split(/;/);
       parts.forEach(function(part) {
         if (!part)
           return;
 
-        var attributeAndKeyPair = part.match(/^([^:]+):(.+)$/);
+        let attributeAndKeyPair = part.match(/^([^:]+):(.+)$/);
         if (!attributeAndKeyPair) {
           console.error('malformed i18n-values: ' + attributeAndKeys);
           return;
         }
 
-        var propName = attributeAndKeyPair[1];
-        var propExpr = attributeAndKeyPair[2];
+        let propName = attributeAndKeyPair[1];
+        let propExpr = attributeAndKeyPair[2];
 
-        var value = chrome.i18n.getMessage(propExpr);
+        let value = chrome.i18n.getMessage(propExpr);
 
         // Allow a property of the form '.foo.bar' to assign a value into
         // element.foo.bar.
         if (propName[0] == '.') {
-          var path = propName.slice(1).split('.');
-          var targetObject = element;
+          let path = propName.slice(1).split('.');
+          let targetObject = element;
           while (targetObject && path.length > 1) {
             targetObject = targetObject[path.shift()];
           }
@@ -85,19 +85,19 @@ var i18nTemplate = (function() {
     }
   };
 
-  var attributeNames = Object.keys(handlers);
-  var selector = '[' + attributeNames.join('],[') + ']';
+  const attributeNames = Object.keys(handlers);
+  const selector = '[' + attributeNames.join('],[') + ']';
 
   /**
    * Processes a DOM tree with chrome.i18n.
    * @param {HTMLElement} node The root of the DOM tree to process.
    */
   function process(node) {
-    var elements = node.querySelectorAll(selector);
-    for (var element, i = 0; element = elements[i]; i++) {
-      for (var j = 0; j < attributeNames.length; j++) {
-        var name = attributeNames[j];
-        var attribute = element.getAttribute(name);
+    const elements = node.querySelectorAll(selector);
+    for (let element, i = 0; element = elements[i]; i++) {
+      for (let j = 0; j < attributeNames.length; j++) {
+        let name = attributeNames[j];
+        let attribute = element.getAttribute(name);
         if (attribute != null)
           handlers[name](element, attribute);
       }

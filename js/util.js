@@ -1,6 +1,6 @@
 /* Copyright (c) 2025 Jema Technology.
      Distributed under the license specified in the root directory of this project. */
-var util = {};
+const util = {};
 
 /**
  * @param {Event} e
@@ -50,7 +50,7 @@ util.writeFile = function(entry, content, onsuccess, opt_onerror) {
   
   console.log('Using Chrome API fallback');
   // Fallback to Chrome API
-  var blob = new Blob([content], {type: 'text/plain'});
+  const blob = new Blob([content], {type: 'text/plain'});
   entry.createWriter(function(writer) {
     writer.onerror = opt_onerror ? opt_onerror : util.handleFSError;
     writer.onwrite = util.writeToWriter_.bind(null, writer, blob, onsuccess);
@@ -101,8 +101,8 @@ util.guessLineEndings = function(text) {
   if (!text) {
     return '\n';
   }
-  var indexOfLF = text.indexOf('\n');
-  var hasCRLF = (indexOfLF > 0) && (text[indexOfLF - 1] === '\r');
+  let indexOfLF = text.indexOf('\n');
+  let hasCRLF = (indexOfLF > 0) && (text[indexOfLF - 1] === '\r');
 
   return (hasCRLF ? '\r\n' : '\n');
 };
