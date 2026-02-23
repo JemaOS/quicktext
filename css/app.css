@@ -867,3 +867,23 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
     display: none;
   }
 }
+
+/* Footer styles */
+.app-footer {
+  text-align: center;
+  padding: 16px;
+  background-color: var(--ta-background-color);
+  border-top: 1px solid var(--ta-divider-color);
+  font-size: 12px;
+  color: var(--ta-ui-text-color);
+}
+
+.app-footer a {
+  color: #5b64ea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.app-footer a:hover {
+  text-decoration: underline;
+}
