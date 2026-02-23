@@ -65,7 +65,7 @@ Tab.prototype.setSession = function(session) {
  * @param {FileEntry} entry
  */
 Tab.prototype.setEntry = function(entry) {
-  var nameChanged = this.getName() != entry.name;
+  let nameChanged = this.getName() != entry.name;
   this.entry_ = entry;
   if (nameChanged)
     $.event.trigger('tabrenamed', this);
@@ -184,7 +184,7 @@ Tabs.prototype.chooseEntries = function(params, callback, opt_oncancel) {
       function(entries) {
         if (entries) {
           chrome.runtime.getBackgroundPage(function(bg) {
-            for (var i = 0; i < entries.length; i++)
+            for (let i = 0; i < entries.length; i++)
               bg.background.copyFileEntry(entries[i], callback);
           });
         } else {
@@ -195,7 +195,7 @@ Tabs.prototype.chooseEntries = function(params, callback, opt_oncancel) {
 };
 
 Tabs.prototype.getTabById = function(id) {
-  for (var i = 0; i < this.tabs_.length; i++) {
+  for (let i = 0; i < this.tabs_.length; i++) {
     if (this.tabs_[i].getId() === id)
       return this.tabs_[i];
   }
@@ -218,15 +218,15 @@ Tabs.prototype.newWindow = function() {
  * @param {?string} opt_content What text content the tab should contain. Otherwise it starts empty.
  */
 Tabs.prototype.newTab = function(opt_content, opt_entry) {
-  var id = 1;
+  let id = 1;
   while (this.getTabById(id)) {
     id++;
   }
 
-  var session = this.editor_.newState(opt_content);
-  var lineEndings = util.guessLineEndings(opt_content);
+  let session = this.editor_.newState(opt_content);
+  let lineEndings = util.guessLineEndings(opt_content);
 
-  var tab = new Tab(id, session, lineEndings, opt_entry || null,
+  let tab = new Tab(id, session, lineEndings, opt_entry || null,
                     this.dialogController_);
   this.tabs_.push(tab);
   $.event.trigger('newtab', tab);
@@ -246,7 +246,7 @@ Tabs.prototype.reorder = function (oldIndex, newIndex) {
 };
 
 Tabs.prototype.getTabIndex = function(tab) {
-  for (var i = 0; i < this.tabs_.length; i++) {
+  for (let i = 0; i < this.tabs_.length; i++) {
     if (this.tabs_[i] === tab)
       return i;
   }
@@ -254,16 +254,16 @@ Tabs.prototype.getTabIndex = function(tab) {
 }
 
 Tabs.prototype.previousTab = function() {
-  var currentTabIndex = this.getTabIndex(this.currentTab_);
-  var previousTabIndex = currentTabIndex - 1;
+  let currentTabIndex = this.getTabIndex(this.currentTab_);
+  let previousTabIndex = currentTabIndex - 1;
   if (previousTabIndex < 0)
     previousTabIndex = this.tabs_.length - 1;
   this.showTab(this.tabs_[previousTabIndex].getId());
 };
 
 Tabs.prototype.nextTab = function() {
-  var currentTabIndex = this.getTabIndex(this.currentTab_);
-  var nextTabIndex = currentTabIndex + 1;
+  let currentTabIndex = this.getTabIndex(this.currentTab_);
+  let nextTabIndex = currentTabIndex + 1;
   if (nextTabIndex >= this.tabs_.length)
     nextTabIndex = 0;
   this.showTab(this.tabs_[nextTabIndex].getId());
@@ -275,7 +275,7 @@ Tabs.prototype.showTab = function(tabId) {
     this.updateCurrentTabState_();
   }
 
-  var tab = this.getTabById(tabId)
+  let tab = this.getTabById(tabId)
   if (!tab) {
     console.error('Can\'t find tab', tabId);
     return;
@@ -287,7 +287,7 @@ Tabs.prototype.showTab = function(tabId) {
 };
 
 Tabs.prototype.close = function(tabId) {
-  for (var i = 0; i < this.tabs_.length; i++) {
+  for (let i = 0; i < this.tabs_.length; i++) {
     if (this.tabs_[i].getId() == tabId)
       break;
   }
@@ -327,7 +327,7 @@ Tabs.prototype.closeTab_ = function(tab) {
     }
   }
 
-  for (var i = 0; i < this.tabs_.length; i++) {
+  for (let i = 0; i < this.tabs_.length; i++) {
     if (this.tabs_[i] === tab)
       break;
   }
@@ -369,7 +369,7 @@ Tabs.prototype.promptAllUnsavedFromIndex_ = function(i, callback) {
     return;
   }
 
-  var tab = this.tabs_[i];
+  let tab = this.tabs_[i];
   if (tab.isSaved()) {
     this.promptAllUnsavedFromIndex_(i + 1, callback);
   } else {
@@ -413,7 +413,7 @@ Tabs.prototype.promptSave_ = function(tab, callbackShowDialog) {
  * @param {function()=} opt_callback
  */
 Tabs.prototype.save = function(opt_tab, opt_callback) {
-  var tab = opt_tab || this.currentTab_;
+  let tab = opt_tab || this.currentTab_;
 
   // Update the tab's editorState if it's the current tab.
   if (tab && tab === this.currentTab_) {
@@ -433,13 +433,13 @@ Tabs.prototype.save = function(opt_tab, opt_callback) {
  * @param {function()=} opt_callback
  */
 Tabs.prototype.saveAs = function(opt_tab, opt_callback) {
-  var tab = opt_tab || this.currentTab_;
+  let tab = opt_tab || this.currentTab_;
   if (tab && tab === this.currentTab_) {
     this.updateCurrentTabState_();
   }
 
   // For Save As: use custom name if set, otherwise use existing file name or default tab name
-  var suggestedName = tab.customName_ ||
+  let suggestedName = tab.customName_ ||
                       (tab.getEntry() && tab.getEntry().name) ||
                       tab.getName();
 
@@ -460,7 +460,7 @@ Tabs.prototype.saveAs = function(opt_tab, opt_callback) {
  * @return {Array.<FileEntry>}
  */
 Tabs.prototype.getFilesToRetain = function() {
-  var toRetain = [];
+  let toRetain = [];
 
   for (i = 0; i < this.tabs_.length; i++) {
     if (this.tabs_[i].getEntry()) {
@@ -479,7 +479,7 @@ Tabs.prototype.openFileEntry = function(entry) {
   }
   
   chrome.fileSystem.getDisplayPath(entry, function(path) {
-    for (var i = 0; i < this.tabs_.length; i++) {
+    for (let i = 0; i < this.tabs_.length; i++) {
       if (this.tabs_[i].getPath() === path) {
         this.showTab(this.tabs_[i].getId());
         return;
