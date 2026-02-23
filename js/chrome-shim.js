@@ -309,58 +309,153 @@
             // Hide custom window controls in PWA
             app.setHasChromeFrame(true);
             
-            // Restore retained file entries from IndexedDB
-            console.log('Attempting to restore retained entries...');
-            chrome.fileSystem.getRetainedEntries(function(entries) {
-              console.log('Restoring retained entries:', entries);
-              console.log('Number of entries found:', entries ? entries.length : 0);
-              
-              // Convert stored handles to entry format for the app
-              var restoredEntries = [];
-              entries.forEach(function(entry) {
-                if (entry.handle && entry.handle.getFile) {
-                  // Verify handle is still valid
-                  entry.handle.getFile().then(function() {
-                    restoredEntries.push(entry.handle);
-                  }).catch(function() {
-                    // Handle no longer valid, skip
-                  });
-                }
-              });
-              
-              // Wait a bit for all handles to be verified
-              setTimeout(function() {
-                // Check if there are files to open from Launch Queue
-                const launchFilesStr = sessionStorage.getItem('quicktext_launch_files');
-                const newFileRequested = sessionStorage.getItem('quicktext_new_file');
-                
-                if (newFileRequested) {
-                  // User requested new file - create empty tab
-                  sessionStorage.removeItem('quicktext_new_file');
-                  app.openTabs([]);
-                  // Trigger new tab creation
-                  setTimeout(() => {
-                    if (app.tabs_ && app.tabs_.newTab) {
-                      app.tabs_.newTab();
-                    }
-                  }, 100);
-                } else if (launchFilesStr) {
-                  try {
-                    const files = JSON.parse(launchFilesStr);
-                    sessionStorage.removeItem('quicktext_launch_files');
-                    app.openTabs([]);
-                    // Open the files
-                    setTimeout(() => {
-                      files.forEach(f => app.tabs_.openFileEntry(f.entry));
-                    }, 100);
-                  } catch (e) {
-                    app.openTabs(restoredEntries);
-                  }
-                } else {
-                  app.openTabs(restoredEntries);
+            // Check if there are files to open from Launch Queue
+            const launchFilesStr = sessionStorage.getItem('quicktext_launch_files');
+            const newFileRequested = sessionStorage.getItem('quicktext_new_file');
+            
+            if (newFileRequested) {
+              // User requested new file - clear saved tabs and create empty tab
+              sessionStorage.removeItem('quicktext_new_file');
+              app.openTabs([]);
+              setTimeout(() => {
+                if (app.tabs_ && app.tabs_.newTab) {
+                  app.tabs_.newTab();
                 }
               }, 100);
-            });
+              return;
+            }
+            
+            if (launchFilesStr) {
+              try {
+                const files = JSON.parse(launchFilesStr);
+                sessionStorage.removeItem('quicktext_launch_files');
+                app.openTabs([]);
+                setTimeout(() => {
+                  files.forEach(f => app.tabs_.openFileEntry(f.entry));
+                }, 100);
+              } catch (e) {
+                app.openTabs([]);
+              }
+              return;
+            }
+            
+            // Restore all tabs from localStorage (including unsaved ones)
+            console.log('Attempting to restore all tabs...');
+            var savedTabsStr = localStorage.getItem('quicktext_open_tabs');
+            var savedTabs = null;
+            try {
+              savedTabs = savedTabsStr ? JSON.parse(savedTabsStr) : null;
+            } catch(e) {
+              console.error('Error parsing saved tabs:', e);
+            }
+            
+            if (savedTabs && savedTabs.length > 0) {
+              console.log('Restoring', savedTabs.length, 'saved tabs');
+              // First open the app with no entries (we'll add tabs manually)
+              app.openTabs([]);
+              
+              setTimeout(function() {
+                var currentTabId = null;
+                // Find which tab was current
+                savedTabs.forEach(function(tabData) {
+                  if (tabData.isCurrent) currentTabId = tabData.id;
+                });
+                
+                // For tabs with file entries, try to restore from IndexedDB
+                // For unsaved tabs, restore content directly
+                chrome.fileSystem.getRetainedEntries(function(retainedEntries) {
+                  // Build a map of retained entries by name
+                  var retainedByName = {};
+                  retainedEntries.forEach(function(e) {
+                    if (e.handle && e.handle.name) {
+                      retainedByName[e.handle.name] = e.handle;
+                    }
+                  });
+                  
+                  // Restore each tab
+                  var tabsToRestore = savedTabs.slice(); // copy
+                  var restoredCount = 0;
+                  
+                  function restoreNextTab(index) {
+                    if (index >= tabsToRestore.length) {
+                      // All tabs restored - switch to the previously active tab
+                      if (app.tabs_ && app.tabs_.tabs_.length > 0) {
+                        // Remove the initial empty tab if it exists and we have restored tabs
+                        var initialTab = app.tabs_.tabs_[0];
+                        if (initialTab && !initialTab.getEntry() &&
+                            initialTab.session_ && initialTab.session_.doc.toString() === '' &&
+                            app.tabs_.tabs_.length > 1) {
+                          app.tabs_.closeTab_(initialTab);
+                        }
+                      }
+                      console.log('All tabs restored');
+                      return;
+                    }
+                    
+                    var tabData = tabsToRestore[index];
+                    
+                    if (tabData.hasEntry && tabData.entryName && retainedByName[tabData.entryName]) {
+                      // Restore tab with file entry
+                      var handle = retainedByName[tabData.entryName];
+                      handle.getFile().then(function(file) {
+                        return file.text();
+                      }).then(function(content) {
+                        handle.isPWAFile = true;
+                        app.tabs_.newTab(content, handle);
+                        restoreNextTab(index + 1);
+                      }).catch(function() {
+                        // File no longer accessible, restore as unsaved with last content
+                        app.tabs_.newTab(tabData.content || '');
+                        if (tabData.customName) {
+                          var newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                          if (newTab) newTab.setName(tabData.customName);
+                        }
+                        restoreNextTab(index + 1);
+                      });
+                    } else {
+                      // Restore unsaved tab with its content
+                      app.tabs_.newTab(tabData.content || '');
+                      // Restore custom name if any
+                      var newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                      if (newTab && tabData.customName) {
+                        newTab.setName(tabData.customName);
+                      }
+                      restoreNextTab(index + 1);
+                    }
+                  }
+                  
+                  restoreNextTab(0);
+                });
+              }, 150);
+            } else {
+              // No saved tabs - restore retained file entries from IndexedDB
+              console.log('No saved tabs found, restoring retained file entries...');
+              chrome.fileSystem.getRetainedEntries(function(entries) {
+                var restoredEntries = [];
+                var pending = entries.length;
+                
+                if (pending === 0) {
+                  app.openTabs([]);
+                  return;
+                }
+                
+                entries.forEach(function(entry) {
+                  if (entry.handle && entry.handle.getFile) {
+                    entry.handle.getFile().then(function() {
+                      restoredEntries.push(entry.handle);
+                      pending--;
+                      if (pending === 0) app.openTabs(restoredEntries);
+                    }).catch(function() {
+                      pending--;
+                      if (pending === 0) app.openTabs(restoredEntries);
+                    });
+                  } else {
+                    pending--;
+                    if (pending === 0) app.openTabs(restoredEntries);
+                  }
+                });
+              });
+            }
           },
           newWindow: function() {
             window.open(window.location.href, '_blank');
@@ -435,54 +530,42 @@
     }
   };
 
-  // Handle PWA window close - save retained files
-  window.addEventListener('beforeunload', function(e) {
-    console.log('Window closing - saving files');
-    // Get all open tabs and retain their file handles
-    if (window.textApp && window.textApp.tabs_) {
-      var tabs = window.textApp.tabs_;
-      for (var i = 0; i < tabs.tabs_.length; i++) {
-        var tab = tabs.tabs_[i];
-        var entry = tab.getEntry();
-        if (entry && entry.name) {
-          // Save the file first if it has unsaved changes
-          if (!tab.isSaved() && entry.createWritable) {
-            var content = tab.getContent_();
-            if (window.writeFileEntry) {
-              window.writeFileEntry(entry, content, function() {
-                console.log('Saved on close:', entry.name);
-              });
-            }
-          }
-          // Then retain the entry
-          chrome.fileSystem.retainPWAEntry(entry);
-          console.log('Retained file on close:', entry.name);
-        }
+  // Save all open tabs (including unsaved) to localStorage
+  // Called on beforeunload and visibilitychange
+  window.saveAllTabsToStorage = function saveAllTabsToStorage() {
+    if (!window.textApp || !window.textApp.tabs_) return;
+    var tabsObj = window.textApp.tabs_;
+    if (typeof tabsObj.saveAllTabsToLocalStorage_ === 'function') {
+      tabsObj.saveAllTabsToLocalStorage_();
+    }
+    // Also retain file entries in IndexedDB
+    for (var i = 0; i < tabsObj.tabs_.length; i++) {
+      var tab = tabsObj.tabs_[i];
+      var entry = tab.getEntry();
+      if (entry && entry.name) {
+        chrome.fileSystem.retainPWAEntry(entry);
       }
     }
+  }
+
+  // Handle PWA window close - save all tabs
+  window.addEventListener('beforeunload', function(e) {
+    console.log('Window closing - saving all tabs');
+    window.saveAllTabsToStorage();
   });
 
   // Also handle visibility change (when user switches away from the app)
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'hidden') {
-      // Save all open files when app goes to background
-      if (window.textApp && window.textApp.tabs_) {
-        var tabs = window.textApp.tabs_;
-        for (var i = 0; i < tabs.tabs_.length; i++) {
-          var entry = tabs.tabs_[i].getEntry();
-          if (entry && entry.name && !tabs.tabs_[i].isSaved()) {
-            // Save the file
-            var content = tabs.tabs_[i].getContent_();
-            if (window.writeFileEntry && entry.createWritable) {
-              window.writeFileEntry(entry, content, function() {
-                console.log('Auto-saved on background:', entry.name);
-              });
-            }
-          }
-        }
-      }
+      console.log('App going to background - saving all tabs');
+      window.saveAllTabsToStorage();
     }
   });
+
+  // Periodic auto-save every 30 seconds
+  setInterval(function() {
+    window.saveAllTabsToStorage();
+  }, 30000);
 
   // Shim for FileError
   window.FileError = function(code) {

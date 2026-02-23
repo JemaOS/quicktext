@@ -51,28 +51,42 @@ MenuController.prototype.addNewTab_ = function(e, tab) {
       'dragend', (event) => { this.onDragEnd_($(tabElement), event)});
   tabElement.addEventListener(
       'drop', (event) => { this.onDrop_(event); });
-  filenameElement.addEventListener(
-      'click', () => { 
-        this.tabButtonClicked_(id); 
-        // On mobile, close sidebar after selecting a tab
-        if (window.innerWidth <= 480) {
-          // Use jQuery to toggle sidebar since windowController might not be accessible this way
-          if (this.tabs_.settings_.get('sidebaropen')) {
-            this.tabs_.settings_.set('sidebaropen', false);
-            $('#sidebar').css('width', '0');
-            $('#sidebar').css('border-right-width', '0');
-            $('#toggle-sidebar').attr('title', chrome.i18n.getMessage('openSidebarButton'));
-            
-            // Update visibility
-            const sidebar = $('#sidebar');
-            if (sidebar.width() === 0) {
-              sidebar.css('visibility', 'hidden');
-            }
+  // Use a click timer to distinguish single click from double click
+  let clickTimer = null;
+  filenameElement.addEventListener('click', () => {
+    // If already editing, ignore
+    if (filenameElement.contentEditable === 'true') return;
+    
+    if (clickTimer) {
+      // Second click within 300ms = double click → rename
+      clearTimeout(clickTimer);
+      clickTimer = null;
+      this.renameTab_(id, filenameElement);
+      return;
+    }
+    
+    // Single click - wait to see if it becomes a double click
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      // Single click: switch to tab
+      this.tabButtonClicked_(id);
+      // On mobile, close sidebar after selecting a tab
+      if (window.innerWidth <= 480) {
+        if (this.tabs_.settings_.get('sidebaropen')) {
+          this.tabs_.settings_.set('sidebaropen', false);
+          $('#sidebar').css('width', '0');
+          $('#sidebar').css('border-right-width', '0');
+          $('#toggle-sidebar').attr('title', chrome.i18n.getMessage('openSidebarButton'));
+          const sidebar = $('#sidebar');
+          if (sidebar.width() === 0) {
+            sidebar.css('visibility', 'hidden');
           }
         }
-      });
+      }
+    }, 250);
+  });
   
-  // Handle double click for desktop and long press for mobile
+  // Handle long press for mobile rename
   let touchTimer;
   filenameElement.addEventListener('touchstart', (e) => {
     if (filenameElement.contentEditable === 'true') {
@@ -81,12 +95,8 @@ MenuController.prototype.addNewTab_ = function(e, tab) {
     }
     touchTimer = setTimeout(() => {
       e.preventDefault(); // Prevent default context menu
-      const tab = this.tabs_.getTabById(id);
-      if (tab && tab.getEntry()) {
-        this.tabs_.saveAs();
-      } else {
-        this.renameTab_(id, filenameElement);
-      }
+      // Long press always renames the tab
+      this.renameTab_(id, filenameElement);
     }, 500); // 500ms long press
   });
   
@@ -96,17 +106,6 @@ MenuController.prototype.addNewTab_ = function(e, tab) {
   
   filenameElement.addEventListener('touchmove', () => {
     clearTimeout(touchTimer);
-  });
-
-  filenameElement.addEventListener('dblclick', (e) => {
-    e.stopPropagation();
-    const tab = this.tabs_.getTabById(id);
-    if (tab && tab.getEntry()) {
-      // If it's a saved file, trigger Save As
-      this.tabs_.saveAs();
-    } else {
-      this.renameTab_(id, filenameElement);
-    }
   });
   
   // Prevent drag start when editing
@@ -237,8 +236,25 @@ MenuController.prototype.renameTab_ = function(id, filenameElement) {
   filenameElement.dataset.editing = 'true';
 
   filenameElement.contentEditable = true;
+  filenameElement.style.cursor = 'text';
   filenameElement.textContent = tab.getName();
   filenameElement.focus();
+  
+  // Enforce max length on input
+  const maxLength = 50;
+  const enforceMaxLength = (e) => {
+    if (filenameElement.textContent.length > maxLength) {
+      filenameElement.textContent = filenameElement.textContent.substring(0, maxLength);
+      // Move cursor to end
+      const range = document.createRange();
+      range.selectNodeContents(filenameElement);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  };
+  filenameElement.addEventListener('input', enforceMaxLength);
   
   // Select all text
   const range = document.createRange();
@@ -253,14 +269,15 @@ MenuController.prototype.renameTab_ = function(id, filenameElement) {
     
     const newName = filenameElement.textContent.trim();
     filenameElement.contentEditable = false;
+    filenameElement.style.cursor = '';
     
     // Remove event listeners
     filenameElement.removeEventListener('blur', save);
     filenameElement.removeEventListener('keydown', keydownHandler);
+    filenameElement.removeEventListener('input', enforceMaxLength);
     
     if (newName && newName !== tab.getName()) {
-      tab.setCustomName(newName);
-      $(document).trigger('tabrenamed', tab);
+      tab.setName(newName);
     } else {
       filenameElement.textContent = tab.getName();
     }

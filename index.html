@@ -252,6 +252,11 @@
               class="search-navigation-button mdc-icon-button material-icons"
               id="search-next-button"
               i18n-values="title:searchNextButton;aria-label:searchNextButton">expand_more</button>
+          <button
+              class="pwa-install-button mdc-icon-button material-icons"
+              id="pwa-install-search"
+              title="Installer l'application"
+              style="display: none;">download</button>
         </div>
         <div id="title-filename" i18n-content="errorTitle"></div>
         <button
@@ -317,12 +322,32 @@
       // Show install button in menu
       const installBtn = document.getElementById('file-menu-install');
       if (installBtn) installBtn.style.display = 'flex';
+      // Show install button in search bar
+      const searchInstallBtn = document.getElementById('pwa-install-search');
+      if (searchInstallBtn) searchInstallBtn.style.display = 'flex';
     });
+
+    // Also show install button after a delay if beforeinstallprompt didn't fire
+    // (some browsers or environments don't fire this event)
+    setTimeout(() => {
+      const installBtn = document.getElementById('file-menu-install');
+      const searchInstallBtn = document.getElementById('pwa-install-search');
+      // Show buttons if they're still hidden (prompt didn't fire but PWA might be installable)
+      if (installBtn && installBtn.style.display === 'none' && !window.matchMedia('(display-mode: standalone)').matches) {
+        installBtn.style.display = 'flex';
+      }
+      if (searchInstallBtn && searchInstallBtn.style.display === 'none' && !window.matchMedia('(display-mode: standalone)').matches) {
+        searchInstallBtn.style.display = 'flex';
+      }
+    }, 3000); // Wait 3 seconds for beforeinstallprompt
 
     // Function to show install prompt
     window.showInstallPrompt = async () => {
       if (!deferredPrompt) {
         console.log('No install prompt available');
+        // Try alternative: open the page in standalone mode hint
+        // Show message to user
+        alert('Pour installer QuickText comme application:\n\n• Sur Chrome: Menu > Installer QuickText\n• Sur mobile: Ajouter à l\'écran d\'accueil depuis le menu du navigateur');
         return;
       }
       // Show the prompt
@@ -340,6 +365,14 @@
       if (installBtn) {
         installBtn.style.display = 'none'; // Hide by default
         installBtn.addEventListener('click', () => {
+          window.showInstallPrompt();
+        });
+      }
+      // Add click handler for search bar install button
+      const searchInstallBtn = document.getElementById('pwa-install-search');
+      if (searchInstallBtn) {
+        searchInstallBtn.style.display = 'none'; // Hide by default
+        searchInstallBtn.addEventListener('click', () => {
           window.showInstallPrompt();
         });
       }

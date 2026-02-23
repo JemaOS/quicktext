@@ -31,12 +31,7 @@ function WindowController(editor, settings, tabs) {
     const tab = self.tabs_.getCurrentTab();
     if (!tab) return;
     
-    if (tab.getEntry()) {
-      // If it's a saved file, trigger Save As
-      self.tabs_.saveAs();
-      return;
-    }
-    
+    // Allow renaming for all tabs (both saved and unsaved)
     $(this).attr('contenteditable', 'true').focus();
     
     // Select all text
@@ -47,6 +42,22 @@ function WindowController(editor, settings, tabs) {
     sel.addRange(range);
   });
   
+  // Enforce max length on header title input
+  $('#title-filename').on('input', function() {
+    const maxLength = 50;
+    if ($(this).text().length > maxLength) {
+      const truncated = $(this).text().substring(0, maxLength);
+      $(this).text(truncated);
+      // Move cursor to end
+      const range = document.createRange();
+      range.selectNodeContents(this);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+
   $('#title-filename').on('blur keydown', function(e) {
     if ($(this).attr('contenteditable') !== 'true') return;
     
@@ -61,10 +72,11 @@ function WindowController(editor, settings, tabs) {
     $(this).attr('contenteditable', 'false');
     const newName = $(this).text().trim();
     const tab = self.tabs_.getCurrentTab();
-    if (tab && !tab.getEntry() && newName) {
+    if (tab && newName && newName !== tab.getName()) {
+      // Rename the tab (works for both saved and unsaved tabs)
       tab.setName(newName);
     } else if (tab) {
-      // Revert to original name if empty
+      // Revert to original name if empty or unchanged
       $(this).text(tab.getName());
     }
   });

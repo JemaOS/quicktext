@@ -362,6 +362,7 @@ TextApp.prototype.onSettingsChanged_ = function(e, key, value) {
 };
 
 const textApp = new TextApp();
+window.textApp = textApp; // Expose globally for PWA persistence
 
 // Handle PWA file launch (when files are opened via file handler)
 document.addEventListener('pwa-launch-files', function(e) {

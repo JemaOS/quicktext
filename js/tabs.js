@@ -28,20 +28,19 @@ Tab.prototype.getId = function() {
 };
 
 Tab.prototype.getName = function() {
-  if (this.entry_) {
-    return this.entry_.name;
-  } else if (this.customName_) {
+  if (this.customName_) {
     return this.customName_;
+  } else if (this.entry_) {
+    return this.entry_.name;
   } else {
     return chrome.i18n.getMessage('untitledFile', [this.id_]) || ('Untitled ' + this.id_);
   }
 };
 
 Tab.prototype.setName = function(name) {
-  if (!this.entry_) {
-    this.customName_ = name;
-    $.event.trigger('tabrenamed', this);
-  }
+  // Allow setting a custom display name for both saved and unsaved tabs
+  this.customName_ = name;
+  $.event.trigger('tabrenamed', this);
 };
 
 /**
@@ -438,8 +437,9 @@ Tabs.prototype.saveAs = function(opt_tab, opt_callback) {
     this.updateCurrentTabState_();
   }
 
-  var suggestedName = tab.getEntry() && tab.getEntry().name ||
-                      util.sanitizeFileName(tab.session_.doc.line(1).text) ||
+  // For Save As: use custom name if set, otherwise use existing file name or default tab name
+  var suggestedName = tab.customName_ ||
+                      (tab.getEntry() && tab.getEntry().name) ||
                       tab.getName();
 
   if (!util.getExtension(suggestedName)) {
@@ -628,6 +628,39 @@ Tabs.prototype.onDocChanged_ = function() {
   
   // Auto-save for PWA files after a delay
   this.scheduleAutoSave_();
+  
+  // Save all tabs to localStorage for session persistence (unsaved tabs included)
+  this.saveAllTabsToLocalStorage_();
+}
+
+/**
+ * Save all open tabs content to localStorage for persistence across sessions.
+ * This ensures unsaved tabs are restored when the app is reopened.
+ */
+Tabs.prototype.saveAllTabsToLocalStorage_ = function() {
+  try {
+    // Update current tab state first to get latest content
+    this.updateCurrentTabState_();
+    
+    var tabsData = [];
+    for (var i = 0; i < this.tabs_.length; i++) {
+      var tab = this.tabs_[i];
+      var entry = tab.getEntry();
+      var content = tab.session_ ? tab.session_.doc.toString() : '';
+      tabsData.push({
+        id: tab.getId(),
+        name: tab.getName(),
+        customName: tab.customName_ || null,
+        content: content,
+        hasEntry: !!entry,
+        entryName: entry ? entry.name : null,
+        isCurrent: tab === this.currentTab_
+      });
+    }
+    localStorage.setItem('quicktext_open_tabs', JSON.stringify(tabsData));
+  } catch(e) {
+    console.error('Error saving tabs to localStorage:', e);
+  }
 }
 
 /**
