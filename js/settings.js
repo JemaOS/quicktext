@@ -6,8 +6,8 @@
 function Settings() {
   this.ready_ = false;
   this.settings_ = {};
-  var storageKeys = {};
-  for (var key in Settings.SETTINGS) {
+  let storageKeys = {};
+  for (let key in Settings.SETTINGS) {
     this.settings_[key] = Settings.SETTINGS[key]['default'];
     storageKeys['settings-' + key] = this.settings_[key];
   }
@@ -74,7 +74,7 @@ Settings.prototype.getAll = function() {
 };
 
 Settings.prototype.set = function(key, value) {
-  var item = {};
+  let item = {};
   item['settings-' + key] = value;
   this.storage_.set(item);
   // this.settings_ will be updated in onChanged_ to keep them in sync with
@@ -82,7 +82,7 @@ Settings.prototype.set = function(key, value) {
 };
 
 Settings.prototype.reset = function(key) {
-  var defaultValue = Settings.SETTINGS[key]['default'];
+  let defaultValue = Settings.SETTINGS[key]['default'];
   this.set(key, defaultValue);
 };
 
@@ -92,8 +92,8 @@ Settings.prototype.isReady = function() {
 
 Settings.prototype.getSettingsCallback_ = function(settings) {
   this.ready_ = true;
-  for (var key in settings) {
-    var value = settings[key];
+  for (let key in settings) {
+    let value = settings[key];
     key = key.substring(9);
     this.settings_[key] = value;
   }
@@ -106,9 +106,9 @@ Settings.prototype.onChanged_ = function(changes, areaName) {
     return;
   }
 
-  for (var key in changes) {
+  for (let key in changes) {
     if (key.indexOf('settings-') !== 0) continue;
-    var value = changes[key].newValue;
+    let value = changes[key].newValue;
     key = key.substring(9);
     console.log('Settings changed:', key, value);
     this.settings_[key] = value;
