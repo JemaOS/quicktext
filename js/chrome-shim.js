@@ -330,11 +330,27 @@
               setTimeout(function() {
                 // Check if there are files to open from Launch Queue
                 const launchFilesStr = sessionStorage.getItem('quicktext_launch_files');
-                if (launchFilesStr) {
+                const newFileRequested = sessionStorage.getItem('quicktext_new_file');
+                
+                if (newFileRequested) {
+                  // User requested new file - create empty tab
+                  sessionStorage.removeItem('quicktext_new_file');
+                  app.openTabs([]);
+                  // Trigger new tab creation
+                  setTimeout(() => {
+                    if (app.tabs_ && app.tabs_.newTab) {
+                      app.tabs_.newTab();
+                    }
+                  }, 100);
+                } else if (launchFilesStr) {
                   try {
                     const files = JSON.parse(launchFilesStr);
                     sessionStorage.removeItem('quicktext_launch_files');
                     app.openTabs([]);
+                    // Open the files
+                    setTimeout(() => {
+                      files.forEach(f => app.tabs_.openFileEntry(f.entry));
+                    }, 100);
                   } catch (e) {
                     app.openTabs(restoredEntries);
                   }
@@ -373,8 +389,10 @@
           // Handle launch files via Launch Queue API
           if ('launchQueue' in window && 'LaunchParams' in window) {
             window.launchQueue.setConsumer(launchParams => {
+              console.log('Launch params received:', launchParams);
+              
               if (launchParams.files && launchParams.files.length > 0) {
-                // Store files for app to retrieve
+                // User opened existing files - store them for the app
                 const files = [];
                 Promise.all(launchParams.files.map(async (handle) => {
                   const file = await handle.getFile();
@@ -384,10 +402,13 @@
                   };
                 })).then(files => {
                   sessionStorage.setItem('quicktext_launch_files', JSON.stringify(files));
+                  console.log('Files to open:', files);
                 });
               } else {
-                // Check if we should open retained files
-                // This is handled in onWindowReady
+                // No files provided - this is a "New File" request!
+                // Store this in sessionStorage to signal new file
+                sessionStorage.setItem('quicktext_new_file', 'true');
+                console.log('New file requested via context menu');
               }
             });
           }

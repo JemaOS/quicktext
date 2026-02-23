@@ -2,7 +2,7 @@
   "name": "QuickText",
   "short_name": "QuickText",
   "description": "Editeur de texte rapide pour JemaOS",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
@@ -30,18 +30,11 @@
   ],
   "file_handlers": [
     {
-      "action": "/index.html",
+      "action": "/",
       "name": "Fichier texte",
       "accept": {
-        "text/*": [".txt", ".text", ".md", ".log"]
+        "text/plain": [".txt", ".text", ".log", ".md"]
       },
-      "icons": [
-        {
-          "src": "icon/96x96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ],
       "launch_type": "single-client"
     }
   ],
@@ -51,8 +44,5 @@
       "url": "/index.html?action=new",
       "icons": [{ "src": "icon/96x96.png", "sizes": "96x96" }]
     }
-  ],
-  "permissions": [
-    "fileSystem"
   ]
 }
