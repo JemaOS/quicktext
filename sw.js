@@ -4,7 +4,7 @@
 // Service Worker for QuickText PWA
 // Provides offline functionality and caching
 
-const CACHE_NAME = 'quicktext-v5';
+const CACHE_NAME = 'quicktext-v8';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -88,7 +88,31 @@ self.addEventListener('fetch', (event) => {
 
 async function handleFetch(request) {
   try {
-    // Try cache first
+    // Network first for HTML, JS, and CSS to always get latest code
+    const url = new URL(request.url);
+    const isCodeAsset = url.pathname.endsWith('.js') ||
+                        url.pathname.endsWith('.css') ||
+                        url.pathname.endsWith('.html') ||
+                        url.pathname === '/';
+
+    if (isCodeAsset) {
+      try {
+        const networkResponse = await fetch(request);
+        if (isCacheableResponse(networkResponse)) {
+          const responseToCache = networkResponse.clone();
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, responseToCache);
+        }
+        return networkResponse;
+      } catch (error) {
+        // Network failed, fall back to cache
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) return cachedResponse;
+        return caches.match('/index.html');
+      }
+    }
+
+    // Cache first for static assets (images, fonts, etc.)
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;

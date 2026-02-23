@@ -119,20 +119,6 @@
       };
     },
 
-    // Delete a file entry from IndexedDB
-    deleteFileEntry: function(fileName, callback) {
-      const request = indexedDB.open('QuickTextFiles', 1);
-      request.onsuccess = function(event) {
-        const db = event.target.result;
-        const transaction = db.transaction(['files'], 'readwrite');
-        const store = transaction.objectStore('files');
-        store.delete(fileName);
-        transaction.oncomplete = function() {
-          if (callback) callback(true);
-        };
-      };
-    },
-
     retainEntry: function(entry) {
       // For PWA entries, store in IndexedDB
       if (entry && entry.name) {
@@ -368,8 +354,8 @@
             
             if (savedTabs && savedTabs.length > 0) {
               console.log('Restoring', savedTabs.length, 'saved tabs');
-              // First open the app with no entries (we'll add tabs manually)
-              app.openTabs([]);
+              // Skip app.openTabs([]) since we'll restore tabs manually -
+              // calling openTabs([]) creates an initial blank tab that conflicts with restored IDs
               
               setTimeout(function() {
                 let currentTabId = null;
@@ -406,6 +392,10 @@
                         }
                       }
                       console.log('All tabs restored');
+                      // Ensure editor is enabled after restoring tabs
+                      if (app.tabs_ && app.tabs_.editor_) {
+                        app.tabs_.editor_.enable();
+                      }
                       return;
                     }
                     
@@ -418,11 +408,11 @@
                         return file.text();
                       }).then(function(content) {
                         handle.isPWAFile = true;
-                        app.tabs_.newTab(content, handle);
+                        app.tabs_.newTab(content, handle, tabData.id);
                         restoreNextTab(index + 1);
                       }).catch(function() {
                         // File no longer accessible, restore as unsaved with last content
-                        app.tabs_.newTab(tabData.content || '');
+                        app.tabs_.newTab(tabData.content || '', null, tabData.id);
                         if (tabData.customName) {
                           const newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
                           if (newTab) newTab.setName(tabData.customName);
@@ -430,8 +420,8 @@
                         restoreNextTab(index + 1);
                       });
                     } else {
-                      // Restore unsaved tab with its content
-                      app.tabs_.newTab(tabData.content || '');
+                      // Restore unsaved tab with its content, preserving the original ID
+                      app.tabs_.newTab(tabData.content || '', null, tabData.id);
                       // Restore custom name if any
                       const newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
                       if (newTab && tabData.customName) {

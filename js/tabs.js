@@ -217,8 +217,8 @@ Tabs.prototype.newWindow = function() {
  *
  * @param {?string} opt_content What text content the tab should contain. Otherwise it starts empty.
  */
-Tabs.prototype.newTab = function(opt_content, opt_entry) {
-  let id = 1;
+Tabs.prototype.newTab = function(opt_content, opt_entry, opt_id) {
+  let id = opt_id || 1;
   while (this.getTabById(id)) {
     id++;
   }
@@ -231,6 +231,7 @@ Tabs.prototype.newTab = function(opt_content, opt_entry) {
   this.tabs_.push(tab);
   $.event.trigger('newtab', tab);
   this.showTab(tab.getId());
+  this.editor_.enable();
 };
 
 /**
@@ -280,24 +281,23 @@ Tabs.prototype.showTab = function(tabId) {
     console.error('Can\'t find tab', tabId);
     return;
   }
-  this.editor_.setSession(tab.getSession(), tab.getExtension());
+  // Set currentTab_ BEFORE setSession so any docchange events fired during
+  // setState operate on the correct (incoming) tab, not the outgoing one.
   this.currentTab_ = tab;
+  this.editor_.setSession(tab.getSession(), tab.getExtension());
   $.event.trigger('switchtab', tab);
   this.editor_.focus();
 };
 
 Tabs.prototype.close = function(tabId) {
-  for (let i = 0; i < this.tabs_.length; i++) {
-    if (this.tabs_[i].getId() == tabId)
-      break;
-  }
+  const idx = this.tabs_.findIndex(function(t) { return t.getId() == tabId; });
 
-  if (i >= this.tabs_.length) {
+  if (idx < 0) {
     console.error('Can\'t find tab', tabId);
     return;
   }
 
-  const tab = this.tabs_[i];
+  const tab = this.tabs_[idx];
 
   if (!tab.isSaved()) {
     this.promptSave_(tab, function(answer) {
@@ -318,22 +318,25 @@ Tabs.prototype.close = function(tabId) {
  * (invoking auto-save and, if needed, SaveAs dialog) is Tabs.close().
  */
 Tabs.prototype.closeTab_ = function(tab) {
-  if (tab === this.currentTab_) {
-    if (this.tabs_.length > 1) {
-      this.nextTab();
-    } else {
-      // Don't close the app, just create a new empty tab
-      this.newTab();
-    }
+  var isLastTab = (this.tabs_.length <= 1);
+
+  if (!isLastTab && tab === this.currentTab_) {
+    // Switch away before removing
+    this.nextTab();
   }
 
-  for (let i = 0; i < this.tabs_.length; i++) {
-    if (this.tabs_[i] === tab)
-      break;
+  const idx = this.tabs_.indexOf(tab);
+  if (idx >= 0) {
+    this.tabs_.splice(idx, 1);
   }
-
-  this.tabs_.splice(i, 1);
   $.event.trigger('tabclosed', tab);
+
+  if (isLastTab) {
+    // Last tab was closed — clear editor and reset state
+    this.currentTab_ = null;
+    this.editor_.setSession(this.editor_.newState(''), null);
+    this.editor_.disable();
+  }
 };
 
 /**
@@ -346,6 +349,7 @@ Tabs.prototype.updateCurrentTabState_ = function() {
 }
 
 Tabs.prototype.closeCurrent = function() {
+  if (!this.currentTab_) return;
   this.close(this.currentTab_.getId());
 };
 
@@ -625,6 +629,7 @@ Tabs.prototype.saveEntry_ = function(tab, entry, opt_callback) {
  * The event handler for the docchange event.
  */
 Tabs.prototype.onDocChanged_ = function() {
+  if (!this.currentTab_) return;
   this.currentTab_.changed();
   
   // Auto-save for PWA files after a delay

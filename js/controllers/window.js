@@ -207,16 +207,27 @@ WindowController.prototype.onFileSystemError = function(e) {
 };
 
 WindowController.prototype.onChangeTab_ = function(e, tab) {
+  if (!tab) {
+    $('#title-filename').text('');
+    return;
+  }
   $('#title-filename').text(tab.getName());
   this.onTabChange_();
 };
 
 WindowController.prototype.onTabPathChange = function(e, tab) {
+  if (!tab) return;
   $('#title-filename').attr('title', tab.getPath());
 };
 
 WindowController.prototype.onTabChange_ = function(e, tab) {
-  if (this.tabs_.getCurrentTab().isSaved()) {
+  const currentTab = this.tabs_.getCurrentTab();
+  if (!currentTab) {
+    $('#title-filename').text('');
+    $('#title-filename').removeClass('unsaved');
+    return;
+  }
+  if (currentTab.isSaved()) {
     $('#title-filename').removeClass('unsaved');
   } else {
     $('#title-filename').addClass('unsaved');

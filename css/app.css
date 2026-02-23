@@ -308,7 +308,8 @@ img {
   width: var(--tab-height);
 }
 
-#tabs-list li:hover > .close {
+#tabs-list li:hover > .close,
+#tabs-list li.active > .close {
   align-items: center;
   display: flex;
   position: absolute;
@@ -316,14 +317,16 @@ img {
   top: 0;
 }
 
-#tabs-list li:hover > .filename {
+#tabs-list li:hover > .filename,
+#tabs-list li.active > .filename {
   padding-right: var(--tab-height);
 }
 
 #file-tabs-menu {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   width: 100%;
 }
@@ -334,7 +337,8 @@ img {
 
 #settings-menu {
   display: none;
-  min-height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   width: 100%;
   z-index: 1;
@@ -868,24 +872,69 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   }
 }
 
-/* Footer styles */
-.app-footer {
-  text-align: center;
-  padding: 16px;
-  background-color: var(--ta-background-color);
-  border-top: 1px solid var(--ta-divider-color);
-  font-size: 12px;
+/* Font size input */
+.font-size-input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  background: var(--ta-accent-color);
+  border: 1px solid transparent;
+  border-radius: 6px;
   color: var(--ta-ui-text-color);
-  width: 100%;
-  box-sizing: border-box;
-  clear: both;
-  position: relative;
-  z-index: 100;
-  margin-top: auto;
+  font-size: 12px;
+  font-weight: 600;
+  height: 26px;
+  margin-left: 4px;
+  outline: none;
+  padding: 0 4px;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  width: 44px;
 }
 
-body {
-  /* Body rules - minimal to not interfere with app layout */
+.font-size-input::-webkit-inner-spin-button,
+.font-size-input::-webkit-outer-spin-button {
+  opacity: 1;
+  cursor: pointer;
+  height: 26px;
+  filter: var(--ta-spinner-filter, invert(0));
+}
+
+body[theme="dark"] {
+  --ta-spinner-filter: invert(1);
+}
+
+body[theme="light"] {
+  --ta-spinner-filter: invert(0);
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([theme="light"]) {
+    --ta-spinner-filter: invert(1);
+  }
+}
+
+.font-size-input:hover {
+  border-color: var(--ta-divider-color);
+}
+
+.font-size-input:focus {
+  border-color: #5b64ea;
+}
+
+/* Footer styles */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--ta-divider-color);
+  font-size: 10px;
+  color: rgba(235, 235, 235, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  gap: 4px;
 }
 
 .app-footer a {
@@ -896,4 +945,5 @@ body {
 
 .app-footer a:hover {
   text-decoration: underline;
+  color: #7376db;
 }

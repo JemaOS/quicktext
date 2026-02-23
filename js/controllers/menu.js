@@ -218,35 +218,10 @@ MenuController.prototype.tabButtonClicked_ = function(id) {
 
 /**
  * Closes a file tab, removing it from the UI.
- * Asks user if they want to delete the file permanently.
  * @param {!Event} The triggering click event.
  * @param {number} The id of the tab to close.
  */
 MenuController.prototype.closeTab_ = function(e, id) {
-  const tab = this.tabs_.getTabById(id);
-  if (!tab) {
-    this.tabs_.close(id);
-    e.stopPropagation();
-    return;
-  }
-  
-  const entry = tab.getEntry();
-  const fileName = tab.getName();
-  
-  // If tab has a file entry, ask if user wants to delete it
-  if (entry && fileName) {
-    const confirmDelete = confirm('Voulez-vous supprimer définitivement le fichier "' + fileName + '" ?\n\nCette action est irréversible.');
-    
-    if (confirmDelete) {
-      // Delete the file from IndexedDB
-      if (chrome && chrome.fileSystem && chrome.fileSystem.deleteFileEntry) {
-        chrome.fileSystem.deleteFileEntry(fileName, function() {
-          console.log('Fichier supprimé:', fileName);
-        });
-      }
-    }
-  }
-  
   this.tabs_.close(id);
   e.stopPropagation();
 };
