@@ -93,16 +93,18 @@ HotkeysController.prototype.onKeydown_ = function(e) {
         return false;
 
       case '+':
-      case '=':
-        var fontSize = this.settings_.get('fontsize');
+      case '=': {
+        let fontSize = this.settings_.get('fontsize');
         this.settings_.set('fontsize', fontSize * this.ZOOM_IN_FACTOR);
         return false;
+      }
 
       case '-':
-      case '_':
-        var fontSize = this.settings_.get('fontsize');
+      case '_': {
+        let fontSize = this.settings_.get('fontsize');
         this.settings_.set('fontsize', fontSize * this.ZOOM_OUT_FACTOR);
         return false;
+      }
 
       default:
         break;

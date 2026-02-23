@@ -29,8 +29,8 @@ SearchController.prototype.updateSearchCount_ = function() {
     $('#search-counting').text('');
     return 0;
   }
-  var searchCount = this.search_.getResultsCount();
-  var searchIndex = this.search_.getCurrentIndex();
+  const searchCount = this.search_.getResultsCount();
+  const searchIndex = this.search_.getCurrentIndex();
   $('#search-counting').text(chrome.i18n.getMessage('searchCounting',
       [searchIndex, searchCount]));
   if (searchCount === 0) {
@@ -80,7 +80,7 @@ SearchController.prototype.deactivateSearch_ = function(e) {
 };
 
 SearchController.prototype.onChange_ = function() {
-  var searchString = $('#search-input').val();
+  const searchString = $('#search-input').val();
   if (searchString === this.search_.getQuery())
     return;
 

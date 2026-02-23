@@ -38,7 +38,7 @@ DialogController.prototype.show = function(callback) {
 DialogController.prototype.disableEverything_ = function() {
   this.editor_.disable();
   const inputs = document.querySelectorAll('input, textarea, .mdc-icon-button');
-  for (var i = 0; i < inputs.length; i++) {
+  for (let i = 0; i < inputs.length; i++) {
     this.disabledElements_.push({'element': inputs[i],
                                'index': inputs[i].tabIndex});
     inputs[i].tabIndex = -1;
@@ -51,7 +51,7 @@ DialogController.prototype.disableEverything_ = function() {
  * @private
  */
 DialogController.prototype.reenableEverything_ = function() {
-  for (var i = 0; i < this.disabledElements_.length; i++) {
+  for (let i = 0; i < this.disabledElements_.length; i++) {
     this.disabledElements_[i]['element'].tabIndex =
         this.disabledElements_[i]['index'];
   }
@@ -63,7 +63,7 @@ DialogController.prototype.resetButtons = function() {
 };
 
 DialogController.prototype.addButton = function(id, text) {
-  var button = $('<button class="dialog-button"></button>');
+  const button = $('<button class="dialog-button"></button>');
   button.attr('id', id);
   button.text(text);
   button.click(this.onClick_.bind(this, id));
@@ -77,10 +77,10 @@ DialogController.prototype.addButton = function(id, text) {
  * @param {...string} var_args The strings to add to the dialog box.
  */
 DialogController.prototype.setText = function(var_args) {
-  var dialogText = this.container_[0].querySelector('.dialog-text');
+  const dialogText = this.container_[0].querySelector('.dialog-text');
   dialogText.innerHTML = null;
   dialogText.appendChild(document.createTextNode(arguments[0] || ''));
-  for (var i = 1; i < arguments.length; i++) {
+  for (let i = 1; i < arguments.length; i++) {
     dialogText.appendChild(document.createElement('br'));
     dialogText.appendChild(document.createTextNode(arguments[i]));
   }
@@ -99,8 +99,8 @@ DialogController.prototype.onClick_ = function(id) {
  * @param {number} delta +1 for next, -1 for previous.
  */
 DialogController.prototype.next_ = function(delta) {
-  var buttons = $('.dialog-button');
-  var newIndex = $.inArray(document.activeElement, buttons) + delta;
+  const buttons = $('.dialog-button');
+  const newIndex = $.inArray(document.activeElement, buttons) + delta;
   if (newIndex < 0)
     newIndex += buttons.length;
   if (newIndex >= buttons.length)

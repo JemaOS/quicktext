@@ -56,8 +56,8 @@ SettingsController.prototype.closeSettings = function() {
 };
 
 SettingsController.prototype.showAll_ = function() {
-  var settings = this.settings_.getAll();
-  for (var key in settings) {
+  const settings = this.settings_.getAll();
+  for (let key in settings) {
     this.show_(key, settings[key]);
   }
 };
@@ -107,7 +107,7 @@ SettingsController.prototype.onSettingChange_ = function(e, key, value) {
  * @private
  */
 SettingsController.prototype.saveSetting_ = function(key) {
-  var value;
+  let value;
   switch (Settings.SETTINGS[key].widget) {
     case 'checkbox':
       value = $('#setting-' + key).prop('checked');

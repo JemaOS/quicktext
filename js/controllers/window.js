@@ -157,7 +157,7 @@ WindowController.prototype.minimize_ = function() {
 };
 
 WindowController.prototype.maximize_ = function() {
-  var maximized = window.chrome.app.window.current().isMaximized();
+  const maximized = window.chrome.app.window.current().isMaximized();
 
   if (maximized) {
     window.chrome.app.window.current().restore();
@@ -233,15 +233,15 @@ WindowController.prototype.resizeStart_ = function(e) {
 };
 
 WindowController.prototype.resizeOnMouseMove_ = function(e) {
-  var change = e.clientX - this.resizeMouseStartX_;
-  var sidebarWidth = this.resizeStartWidth_ + change;
+  let change = e.clientX - this.resizeMouseStartX_;
+  let sidebarWidth = this.resizeStartWidth_ + change;
   if (sidebarWidth < 20) sidebarWidth = 20;
   $('#sidebar').css('width', sidebarWidth + 'px');
   return sidebarWidth;
 };
 
 WindowController.prototype.resizeFinish_ = function(e) {
-  var sidebarWidth = this.resizeOnMouseMove_(e);
+  let sidebarWidth = this.resizeOnMouseMove_(e);
   this.settings_.set('sidebarwidth', sidebarWidth);
   $(document).off('mousemove.sidebar');
   $(document).off('mouseup.sidebar');
@@ -259,6 +259,6 @@ WindowController.prototype.updateSidebarVisibility_ = function() {
 };
 
 WindowController.prototype.onError_ = function(event) {
-  var message = event.originalEvent.message;
-  var errorStack = event.originalEvent.error.stack;
+  const message = event.originalEvent.message;
+  const errorStack = event.originalEvent.error.stack;
 };
