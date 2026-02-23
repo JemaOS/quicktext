@@ -930,11 +930,19 @@ body[theme="light"] {
   padding: 8px 12px;
   border-top: 1px solid var(--ta-divider-color);
   font-size: 10px;
-  color: rgba(235, 235, 235, 0.5);
+  color: var(--ta-footer-text-color, #333333);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   gap: 4px;
+}
+
+body[theme="dark"] {
+  --ta-footer-text-color: rgba(235, 235, 235, 0.5);
+}
+
+body[theme="light"] {
+  --ta-footer-text-color: #333333;
 }
 
 .app-footer a {
