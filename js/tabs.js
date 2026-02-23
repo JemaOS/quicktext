@@ -471,8 +471,8 @@ Tabs.prototype.getFilesToRetain = function() {
 };
 
 Tabs.prototype.openFileEntry = function(entry) {
-  // Handle PWA files (File System Access API)
-  if (entry && entry.isPWAFile) {
+  // Handle PWA files (File System Access API) - check for getFile method
+  if (entry && (entry.isPWAFile || entry.getFile)) {
     this.openPWAFileEntry(entry);
     return;
   }
@@ -485,6 +485,13 @@ Tabs.prototype.openFileEntry = function(entry) {
       }
     }
 
+    // Check for PWA file again after display path
+    if (entry && entry.getFile) {
+      entry.isPWAFile = true;
+      this.openPWAFileEntry(entry);
+      return;
+    }
+
     entry.file(this.readFileToNewTab_.bind(this, entry));
   }.bind(this));
 };
@@ -494,6 +501,8 @@ Tabs.prototype.openFileEntry = function(entry) {
  * @param {Object} entry - PWA file entry with handle
  */
 Tabs.prototype.openPWAFileEntry = function(entry) {
+  var self = this;
+  
   // Check if already open
   for (var i = 0; i < this.tabs_.length; i++) {
     var tab = this.tabs_[i];
@@ -503,14 +512,45 @@ Tabs.prototype.openPWAFileEntry = function(entry) {
     }
   }
 
-  // Create new tab with the content
-  this.newTab(entry.content, entry);
-  
-  // Close empty initial tab if exists
-  if (this.tabs_.length === 2 &&
-      !this.tabs_[0].getEntry() &&
-      this.tabs_[0].isSaved()) {
-    this.close(this.tabs_[0].getId());
+  // If entry has content, use it directly
+  if (entry.content) {
+    entry.isPWAFile = true;
+    this.newTab(entry.content, entry);
+    
+    // Close empty initial tab if exists
+    if (this.tabs_.length === 2 &&
+        !this.tabs_[0].getEntry() &&
+        this.tabs_[0].isSaved()) {
+      this.close(this.tabs_[0].getId());
+    }
+    return;
+  }
+
+  // Otherwise, read the file content
+  if (entry.getFile) {
+    entry.getFile().then(function(file) {
+      return file.text();
+    }).then(function(content) {
+      entry.content = content;
+      entry.isPWAFile = true;
+      self.newTab(content, entry);
+      
+      // Close empty initial tab if exists
+      if (self.tabs_.length === 2 &&
+          !self.tabs_[0].getEntry() &&
+          self.tabs_[0].isSaved()) {
+        self.close(self.tabs_[0].getId());
+      }
+    }).catch(function(err) {
+      console.error('Error reading file:', err);
+      // Open with empty content if read fails
+      entry.isPWAFile = true;
+      self.newTab('', entry);
+    });
+  } else {
+    // Fallback
+    entry.isPWAFile = true;
+    this.newTab('', entry);
   }
 };
 

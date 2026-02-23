@@ -346,12 +346,19 @@
 
   // Helper to write file (used by the app)
   window.writeFileEntry = function(entry, content, callback, errorCallback) {
+    console.log('writeFileEntry called, entry:', entry, 'has createWritable:', !!entry.createWritable);
     if (entry.createWritable) {
       entry.createWritable().then(writable => {
-        writable.write(content);
-        writable.close();
-        if (callback) callback();
+        console.log('Using File System Access API to write');
+        // Convert string to Blob for proper writing
+        const blob = new Blob([content], { type: 'text/plain' });
+        writable.write(blob);
+        writable.close().then(() => {
+          console.log('File written successfully');
+          if (callback) callback();
+        });
       }).catch(err => {
+        console.error('Write error:', err);
         if (errorCallback) errorCallback(err);
       });
     } else {

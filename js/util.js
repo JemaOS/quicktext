@@ -36,15 +36,19 @@ util.handleFSError = function(e) {
  * Truncate the file and write the content.
  */
 util.writeFile = function(entry, content, onsuccess, opt_onerror) {
+  console.log('util.writeFile called, entry:', entry, 'isPWAFile:', entry && entry.isPWAFile, 'createWritable:', entry && entry.createWritable);
+  
   // Use PWA-compatible writeFileEntry if:
   // 1. window.writeFileEntry exists (PWA mode), AND
   // 2. Entry has createWritable method (File System Access API), OR
   // 3. Entry is marked as PWA file
-  if (window.writeFileEntry && (entry.createWritable || entry.isPWAFile)) {
+  if (window.writeFileEntry && entry && (entry.createWritable || entry.isPWAFile)) {
+    console.log('Using PWA writeFileEntry');
     window.writeFileEntry(entry, content, onsuccess, opt_onerror || util.handleFSError);
     return;
   }
   
+  console.log('Using Chrome API fallback');
   // Fallback to Chrome API
   var blob = new Blob([content], {type: 'text/plain'});
   entry.createWriter(function(writer) {
