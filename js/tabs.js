@@ -322,7 +322,8 @@ Tabs.prototype.closeTab_ = function(tab) {
     if (this.tabs_.length > 1) {
       this.nextTab();
     } else {
-      window.close();
+      // Don't close the app, just create a new empty tab
+      this.newTab();
     }
   }
 
