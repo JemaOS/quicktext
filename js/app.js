@@ -226,16 +226,16 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     savedColor = e.target.value;
     localStorage.setItem('quicktext_text_color', savedColor);
     
-    // Check if there's a text selection
-    const hasSelection = window.getSelection().toString().length > 0;
+    // Check if there's a text selection in the editor
+    const view = this.editor_?.editorView_;
+    const hasSelection = view && !view.state.selection.main.empty;
     
     if (hasSelection) {
-      // Apply color to selected text only
+      // Apply color to selected text only - don't change global color
       applyColorToSelection(savedColor);
     } else {
-      // No selection - set color for future typing (like Google Docs)
-      // This will apply to newly typed text
-      applyFormat();
+      // No selection - this would set the color for future typing (like Google Docs)
+      // For now, don't apply any color to avoid changing all text
     }
   });
   
