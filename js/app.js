@@ -192,36 +192,23 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   // Apply color to selected text only
   const applyColorToSelection = (color) => {
     try {
-      const view = this.editor_?.editorView_;
-      if (!view) return;
+      // Get browser selection
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
       
-      const state = view.state;
-      const selection = state.selection.main;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return; // No actual selection
       
-      if (selection.empty) {
-        // No selection, don't apply
-        return;
-      }
+      // Wrap selection in a span with the color
+      const span = document.createElement('span');
+      span.style.color = color;
+      span.textContent = range.toString();
       
-      // For CodeMirror 6, we need to use decorators properly
-      // Create a decoration for the text color
-      const { Decoration } = window.CodeMirror;
+      range.deleteContents();
+      range.insertNode(span);
       
-      const textColorDecoration = Decoration.mark({
-        attributes: { style: `color: ${color}` }
-      });
-      
-      // Apply the decoration to the selected range
-      const range = textColorDecoration.range(selection.from, selection.to);
-      
-      view.dispatch({
-        effects: [
-          window.CodeMirror.view.EditorView.setDecorations.of({
-            range
-          })
-        ]
-      });
-      
+      // Clear selection after applying
+      selection.removeAllRanges();
     } catch (e) {
       console.error('Error applying color to selection:', e);
     }
