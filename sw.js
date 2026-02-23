@@ -90,12 +90,16 @@ self.addEventListener('fetch', (event) => {
         }
 
         return fetch(event.request).then((networkResponse) => {
-          // Don't cache non-successful responses
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          // Check if response is valid for caching
+          const isCacheable = networkResponse && 
+                              networkResponse.status === 200 && 
+                              networkResponse.type === 'basic';
+          
+          if (!isCacheable) {
             return networkResponse;
           }
-
-          // Clone the response for caching
+          
+          // Cache the successful response
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
