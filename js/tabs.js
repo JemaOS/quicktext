@@ -532,17 +532,33 @@ Tabs.prototype.modeAutoSet = function(tab) {
 Tabs.prototype.readFileToNewTab_ = function(entry, file) {
   $.event.trigger('loadingfile');
   var self = this;
-  var reader = new FileReader();
-  reader.onerror = util.handleFSError;
-  reader.onloadend = function(e) {
-    self.newTab(this.result, entry);
-    if (self.tabs_.length === 2 &&
-        !self.tabs_[0].getEntry() &&
-        self.tabs_[0].isSaved()) {
-      self.close(self.tabs_[0].getId());
-    }
+  
+  // Handle PWA File System Access API (entry.getFile) vs Chrome API (entry.file)
+  var readContent = function(fileObj) {
+    var reader = new FileReader();
+    reader.onerror = util.handleFSError;
+    reader.onloadend = function(e) {
+      // Mark as PWA file for later saving
+      entry.isPWAFile = true;
+      self.newTab(this.result, entry);
+      if (self.tabs_.length === 2 &&
+          !self.tabs_[0].getEntry() &&
+          self.tabs_[0].isSaved()) {
+        self.close(self.tabs_[0].getId());
+      }
+    };
+    reader.readAsText(fileObj);
   };
-  reader.readAsText(file);
+  
+  if (entry.getFile) {
+    // PWA File System Access API
+    entry.getFile().then(readContent);
+  } else {
+    // Chrome API
+    entry.file(function(file) {
+      readContent(file);
+    });
+  }
 }
 
 /**
@@ -553,6 +569,11 @@ Tabs.prototype.readFileToNewTab_ = function(entry, file) {
 Tabs.prototype.saveEntry_ = function(tab, entry, opt_callback) {
   if (!entry) {
     return;
+  }
+
+  // Mark as PWA file if it's a File System Access API handle
+  if (entry.createWritable) {
+    entry.isPWAFile = true;
   }
 
   tab.setEntry(entry);
