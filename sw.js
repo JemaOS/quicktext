@@ -82,39 +82,40 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request).then((networkResponse) => {
-          // Check if response is valid for caching
-          const isCacheable = networkResponse && 
-                              networkResponse.status === 200 && 
-                              networkResponse.type === 'basic';
-          
-          if (!isCacheable) {
-            return networkResponse;
-          }
-          
-          // Cache the successful response
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return networkResponse;
-        });
-      })
-      .catch(() => {
-        // If both cache and network fail, return the offline page
-        return caches.match('/index.html');
-      })
-  );
+  // Use async function for cleaner code
+  event.respondWith(handleFetch(event.request));
 });
+
+async function handleFetch(request) {
+  try {
+    // Try cache first
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // Not in cache, fetch from network
+    const networkResponse = await fetch(request);
+    
+    // Cache successful responses
+    if (isCacheableResponse(networkResponse)) {
+      const responseToCache = networkResponse.clone();
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, responseToCache);
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    // If both cache and network fail, return the offline page
+    return caches.match('/index.html');
+  }
+}
+
+function isCacheableResponse(response) {
+  return response && 
+         response.status === 200 && 
+         response.type === 'basic';
+}
 
 // Handle file open from file handler API
 async function handleFileOpen(request) {
