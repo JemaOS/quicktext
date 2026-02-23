@@ -876,6 +876,18 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   border-top: 1px solid var(--ta-divider-color);
   font-size: 12px;
   color: var(--ta-ui-text-color);
+  width: 100%;
+  box-sizing: border-box;
+  clear: both;
+  position: relative;
+  z-index: 100;
+  margin-top: auto;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .app-footer a {
