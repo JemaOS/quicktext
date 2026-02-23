@@ -7,6 +7,10 @@
     "message": "New",
     "description": "The text of the File Menu 'New'."
   },
+  "fileMenuInstall": {
+    "message": "Install App",
+    "description": "The text of the File Menu 'Install'."
+  },
   "fileMenuOpen": {
     "message": "Open",
     "description": "The text of the File Menu 'Open'."
