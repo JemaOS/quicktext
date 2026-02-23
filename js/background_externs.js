@@ -1,6 +1,8 @@
 /* Copyright (c) 2025 Jema Technology.
      Distributed under the license specified in the root directory of this project. */
 /**
+ * Externs file for Google Closure Compiler.
+ * These are type declarations, not implementations.
  * @constructor
  */
 function TextApp() {}
