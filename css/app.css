@@ -876,6 +876,12 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
     display: flex !important;
     visibility: visible !important;
   }
+
+  /* On tablets, shorten copyright */
+  .status-copyright {
+    font-size: 10px;
+    padding: 0 6px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -899,6 +905,25 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   
   #sidebar-resizer {
     display: none;
+  }
+
+  /* Status bar on mobile: hide copyright, keep only essential info */
+  .status-copyright {
+    display: none !important;
+  }
+
+  /* Remove spacers so items align left/right */
+  #status-bar .status-spacer {
+    display: none !important;
+  }
+
+  /* Push encoding to the right */
+  #status-encoding {
+    margin-left: auto;
+  }
+
+  #status-bar {
+    padding: 0 4px;
   }
 }
 
