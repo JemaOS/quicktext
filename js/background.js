@@ -202,8 +202,39 @@ Background.prototype.retainFiles_ = function(toRetain) {
 Background.prototype.onWindowReady = function(textApp) {
   this.windows_.push(textApp);
   textApp.setHasChromeFrame(this.ifShowFrame_());
-  textApp.openTabs(this.entriesToOpen_);
-  this.entriesToOpen_ = [];
+  
+  // Before opening tabs, verify that each entry still exists
+  const validEntries = [];
+  let processedCount = 0;
+  const entriesToCheck = this.entriesToOpen_;
+  
+  if (entriesToCheck.length === 0) {
+    textApp.openTabs(this.entriesToOpen_);
+    this.entriesToOpen_ = [];
+    return;
+  }
+  
+  // Check each entry to see if the file still exists
+  for (let i = 0; i < entriesToCheck.length; i++) {
+    entriesToCheck[i].getMetadata(function(metadata) {
+      // File exists
+      validEntries.push(entriesToCheck[processedCount]);
+      processedCount++;
+      
+      if (processedCount === entriesToCheck.length) {
+        textApp.openTabs(validEntries);
+        this.entriesToOpen_ = [];
+      }
+    }.bind(this), function(error) {
+      // File doesn't exist - don't add it
+      processedCount++;
+      
+      if (processedCount === entriesToCheck.length) {
+        textApp.openTabs(validEntries);
+        this.entriesToOpen_ = [];
+      }
+    }.bind(this, i));
+  }
 };
 
 /**
