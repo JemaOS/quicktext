@@ -168,9 +168,11 @@ img {
 #window-container {
   -webkit-box-align: stretch;
   -webkit-box-orient: horizontal;
-  display: -webkit-box;
+  display: flex;
+  flex-direction: row;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   -webkit-user-select: none;
 }
 
@@ -181,8 +183,8 @@ img {
   cursor: default;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   font-size: 120%;
-  height: 100%;
   overflow: hidden;
   position: relative;
   -webkit-transition: width 0.2s ease-in-out, background-color 0.2s;
@@ -500,10 +502,12 @@ body[theme="light"] .mdc-radio .mdc-radio__native-control:enabled:not(:checked)+
 }
 
 #main-container {
-  -webkit-box-align: stretch;
-  -webkit-box-flex: 1;
-  -webkit-box-orient: vertical;
-  display: -webkit-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 header {
@@ -755,8 +759,10 @@ header.hide-controls #window-close {
 }
 
 #editor {
-  -webkit-box-flex: 1.0;
+  flex: 1;
+  min-height: 0;
   position: relative;
+  overflow: hidden;
 }
 
 /* Markup below overrides default search input box styling. */
