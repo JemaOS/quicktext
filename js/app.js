@@ -223,6 +223,13 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   // Restore all formatting from localStorage
   const restoreFormatting = () => {
     if (!this.editor_) return;
+    const view = this.editor_.editorView_;
+    if (!view) return;
+    const docLength = view.state.doc.length;
+
+    // Only restore if document has substantial content (>10 chars as sanity check)
+    if (docLength < 10) return;
+
     try {
       const savedHeadings = localStorage.getItem('quicktext_headings');
       if (savedHeadings) {
@@ -230,11 +237,17 @@ TextApp.prototype.setupFormatToolbar_ = function() {
         this.editor_.restoreHeadingsByLineNumber(map);
       }
     } catch (e) { /* ignore */ }
+
+    // For mark decorations, also check that saved marks fit within current doc length
     try {
       const savedMarks = localStorage.getItem('quicktext_marks');
       if (savedMarks) {
         const marks = JSON.parse(savedMarks);
-        this.editor_.restoreMarkDecorations(marks);
+        // Filter marks that fit within current document length
+        const validMarks = marks.filter(m => m.from >= 0 && m.to <= docLength && m.from < m.to);
+        if (validMarks.length > 0) {
+          this.editor_.restoreMarkDecorations(validMarks);
+        }
       }
     } catch (e) { /* ignore */ }
   };
