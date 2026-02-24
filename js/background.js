@@ -59,28 +59,10 @@ Background.prototype.focusWindow = function(windowId) {
 };
 
 /**
- * @param {Object.<string, Object>} launchData
- * Handle onLaunch event.
+ * @param {Array} entries
+ * Focus window and open entries after checking file existence.
  */
-Background.prototype.launch = function(launchData) {
-  const entries = [];
-  chrome.storage.local.get('retainedEntryIds', function(data) {
-    const retainedEntryIds = data['retainedEntryIds'] || [];
-    for (let i = 0; i < retainedEntryIds.length; i++) {
-      chrome.fileSystem.restoreEntry(retainedEntryIds[i], function(entry) {
-        if (!chrome.runtime.lastError) {
-          this.entriesToOpen_.push(entry);
-        }
-      }.bind(this));
-    }
-  }.bind(this));
-
-  if (launchData && launchData['items']) {
-    for (let i = 0; i < launchData['items'].length; i++) {
-      entries.push(launchData['items'][i]['entry']);
-    }
-  }
-
+Background.prototype.focusWindowWithEntries_ = function(entries) {
   this.focusWindow(0);
 
   for (let i = 0; i < entries.length; i++) {
@@ -94,6 +76,88 @@ Background.prototype.launch = function(launchData) {
           }
         }.bind(this));
   }
+};
+
+/**
+ * @param {Object.<string, Object>} launchData
+ * Handle onLaunch event.
+ */
+Background.prototype.launch = function(launchData) {
+  const entries = [];
+  
+  // Handle launchData entries (files opened from outside the app)
+  if (launchData && launchData['items']) {
+    for (let i = 0; i < launchData['items'].length; i++) {
+      entries.push(launchData['items'][i]['entry']);
+    }
+  }
+
+  chrome.storage.local.get('retainedEntryIds', function(data) {
+    const retainedEntryIds = data['retainedEntryIds'] || [];
+    let processedCount = 0;
+    const validRetainedEntries = [];
+    
+    // If no retained entries, just focus the window with launchData entries
+    if (retainedEntryIds.length === 0) {
+      this.focusWindowWithEntries_(entries);
+      return;
+    }
+    
+    // Check each retained entry to see if the file still exists
+    for (let i = 0; i < retainedEntryIds.length; i++) {
+      chrome.fileSystem.restoreEntry(retainedEntryIds[i], function(entry) {
+        processedCount++;
+        if (!chrome.runtime.lastError && entry) {
+          // Verify the file still exists by trying to read its metadata
+          entry.getMetadata(function(metadata) {
+            // File exists, add it to valid entries
+            validRetainedEntries.push(entry);
+            
+            // After all entries are processed, focus the window
+            if (processedCount === retainedEntryIds.length) {
+              this.onRetainedEntriesChecked_(entries, validRetainedEntries, retainedEntryIds);
+            }
+          }.bind(this), function(error) {
+            // File doesn't exist or can't be accessed - don't restore it
+            console.log('File no longer exists, not restoring');
+            
+            // After all entries are processed, focus the window
+            if (processedCount === retainedEntryIds.length) {
+              this.onRetainedEntriesChecked_(entries, validRetainedEntries, retainedEntryIds);
+            }
+          }.bind(this));
+        } else {
+          // Entry couldn't be restored - don't add it
+          // After all entries are processed, focus the window
+          if (processedCount === retainedEntryIds.length) {
+            this.onRetainedEntriesChecked_(entries, validRetainedEntries, retainedEntryIds);
+          }
+        }
+      }.bind(this));
+    }
+  }.bind(this));
+};
+
+/**
+ * @param {Array} launchDataEntries
+ * @param {Array} validRetainedEntries
+ * @param {Array} retainedEntryIds
+ * Called after checking all retained entries.
+ */
+Background.prototype.onRetainedEntriesChecked_ = function(launchDataEntries, validRetainedEntries, retainedEntryIds) {
+  // If some files no longer exist, update the retainedEntryIds in storage
+  if (validRetainedEntries.length !== retainedEntryIds.length) {
+    const validEntryIds = [];
+    for (let i = 0; i < validRetainedEntries.length; i++) {
+      validEntryIds.push(chrome.fileSystem.retainEntry(validRetainedEntries[i]));
+    }
+    chrome.storage.local.set({'retainedEntryIds': validEntryIds});
+    console.log('Updated retainedEntryIds: removed', retainedEntryIds.length - validRetainedEntries.length, 'non-existent files');
+  }
+  
+  // Combine launchData entries and valid retained entries
+  const allEntries = launchDataEntries.concat(validRetainedEntries);
+  this.focusWindowWithEntries_(allEntries);
 };
 
 /**
