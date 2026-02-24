@@ -338,6 +338,9 @@ Tabs.prototype.closeTab_ = function(tab) {
     });
   }
 
+  // Save tabs to localStorage immediately after closing a tab
+  this.saveAllTabsToLocalStorage_();
+
   if (isLastTab) {
     // Last tab was closed — clear editor and reset state
     this.currentTab_ = null;
