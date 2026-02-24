@@ -139,6 +139,9 @@ WindowController.prototype.windowControlsVisible = function(show) {
  */
 WindowController.prototype.setTheme = function(theme) {
   $('body').attr('theme', theme);
+  // Save theme hint to localStorage so the inline script can apply it
+  // immediately on next load, preventing the white flash.
+  try { localStorage.setItem('quicktext_theme_hint', theme); } catch(e) {}
 };
 
 /**
@@ -199,11 +202,18 @@ WindowController.prototype.toggleSidebar_ = function() {
 };
 
 WindowController.prototype.onLoadingFile = function(e) {
-  $('#title-filename').text(chrome.i18n.getMessage('loadingTitle'));
+  const currentTab = this.tabs_ && this.tabs_.getCurrentTab();
+  if (currentTab) {
+    $('#title-filename').text(chrome.i18n.getMessage('loadingTitle'));
+  }
 };
 
 WindowController.prototype.onFileSystemError = function(e) {
-  $('#title-filename').text(chrome.i18n.getMessage('errorTitle'));
+  // Only show error in title if a tab is already open (not during initialization)
+  const currentTab = this.tabs_ && this.tabs_.getCurrentTab();
+  if (currentTab) {
+    $('#title-filename').text(chrome.i18n.getMessage('errorTitle'));
+  }
 };
 
 WindowController.prototype.onChangeTab_ = function(e, tab) {

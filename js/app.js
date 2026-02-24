@@ -83,9 +83,63 @@ TextApp.prototype.onSettingsReady_ = function() {
   // Setup format toolbar
   this.setupFormatToolbar_();
 
+  // Setup status bar
+  this.setupStatusBar_();
+
   chrome.runtime.getBackgroundPage(function(bg) {
     bg.background.onWindowReady(this);
   }.bind(this));
+};
+
+/**
+ * Setup the status bar at the bottom of the editor.
+ */
+TextApp.prototype.setupStatusBar_ = function() {
+  const posEl    = document.getElementById('status-position');
+  const charsEl  = document.getElementById('status-chars');
+
+  const updateStatus = () => {
+    const view = this.editor_?.editorView_;
+    if (!view) return;
+    const state = view.state;
+
+    // Cursor position
+    const sel = state.selection.main;
+    const line = state.doc.lineAt(sel.head);
+    const col  = sel.head - line.from + 1;
+    if (posEl) posEl.textContent = `Ln ${line.number}, Col ${col}`;
+
+    // Character / selection count
+    if (charsEl) {
+      if (!sel.empty) {
+        const n = sel.to - sel.from;
+        charsEl.textContent = `${n} sélectionné${n > 1 ? 's' : ''}`;
+      } else {
+        const total = state.doc.length;
+        charsEl.textContent = `${total} caractère${total !== 1 ? 's' : ''}`;
+      }
+    }
+  };
+
+  // Hook into CodeMirror's update listener
+  setTimeout(() => {
+    const view = this.editor_?.editorView_;
+    if (!view) return;
+    view.dom.addEventListener('click',  updateStatus);
+    view.dom.addEventListener('keyup',  updateStatus);
+    view.dom.addEventListener('mouseup', updateStatus);
+    updateStatus();
+  }, 300);
+
+  // Update on tab switch
+  $(document).bind('switchtab', () => {
+    setTimeout(updateStatus, 50);
+  });
+
+  // Update on document change
+  $(document).bind('docchange', () => {
+    updateStatus();
+  });
 };
 
 /**
@@ -97,8 +151,7 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   const pasteBtn = document.getElementById('paste-btn');
   
   const fontFamilySelect = document.getElementById('font-family-select');
-  const fontSizeInput = document.getElementById('font-size-input');
-  const textColorInput = document.getElementById('text-color-input');
+  const headingSelect = document.getElementById('heading-select');
   const boldBtn = document.getElementById('bold-btn');
   const italicBtn = document.getElementById('italic-btn');
   const alignLeftBtn = document.getElementById('align-left-btn');
@@ -107,40 +160,136 @@ TextApp.prototype.setupFormatToolbar_ = function() {
 
   // Load saved settings or defaults
   const savedFont = localStorage.getItem('quicktext_font_family') || 'monospace';
-  let savedColor = localStorage.getItem('quicktext_text_color') || '';
   let isBold = localStorage.getItem('quicktext_text_bold') === 'true';
   let isItalic = localStorage.getItem('quicktext_text_italic') === 'true';
 
   fontFamilySelect.value = savedFont;
-  
-  // Sync font size with settings
-  if (this.settings_) {
-    fontSizeInput.value = this.settings_.get('fontsize');
-  }
-  
-  $(document).bind('settingschange', (e, key, value) => {
-    if (key === 'fontsize') {
-      fontSizeInput.value = value;
-    } else if (key === 'theme') {
-      setTimeout(updateColorPickerUI, 50);
-    }
-  });
 
-  fontSizeInput.addEventListener('change', (e) => {
-    if (this.settings_) {
-      this.settings_.set('fontsize', Number.parseInt(e.target.value));
-    }
-  });
-  
-  const updateColorPickerUI = () => {
-    if (savedColor) {
-      textColorInput.value = savedColor;
-    } else {
-      // If no custom color, show the theme's default text color
-      const isDark = document.body.getAttribute('theme') === 'dark';
-      textColorInput.value = isDark ? '#f8f8f2' : '#000000';
-    }
+  // Restore bold/italic button visual state immediately
+  if (boldBtn) boldBtn.style.fontWeight = isBold ? 'bold' : 'normal';
+  if (italicBtn) italicBtn.style.fontStyle = isItalic ? 'italic' : 'normal';
+
+  // Clear last selection when user clicks in editor without selecting
+  const editorEl = document.getElementById('editor');
+  if (editorEl) {
+    editorEl.addEventListener('mouseup', () => {
+      const view = this.editor_?.editorView_;
+      if (view && view.state.selection.main.empty) {
+        this.editor_?.clearLastSelection();
+      }
+    });
+  }
+
+  // Helper: get the active selection (current or last saved)
+  const getActiveSelection = () => {
+    const view = this.editor_?.editorView_;
+    if (!view) return null;
+    // Current selection takes priority
+    const cur = view.state.selection.main;
+    if (!cur.empty) return { from: cur.from, to: cur.to };
+    // Fall back to last saved selection
+    return this.editor_?.getLastSelection() || null;
   };
+
+  // Helper: apply style to active selection
+  const applyStyleToActiveSelection = (style) => {
+    const sel = getActiveSelection();
+    if (!sel || sel.from === sel.to) return false;
+    this.editor_.applyStyleToRange(sel.from, sel.to, style);
+    return true;
+  };
+
+  // Heading level -> CSS style object for mark decorations (partial selection)
+  const HEADING_MARK_STYLES = {
+    1: { 'font-size': '2em',    'font-weight': 'bold',   'line-height': '1.3' },
+    2: { 'font-size': '1.5em',  'font-weight': 'bold',   'line-height': '1.3' },
+    3: { 'font-size': '1.25em', 'font-weight': 'bold',   'line-height': '1.3' },
+    4: { 'font-size': '1.1em',  'font-weight': 'bold',   'line-height': '1.3' },
+    5: { 'font-size': '1em',    'font-weight': 'bold',   'line-height': '1.3' },
+    6: { 'font-size': '0.9em',  'font-weight': 'bold',   'line-height': '1.3' },
+  };
+
+  // Save heading line map to localStorage
+  const saveHeadings = () => {
+    if (!this.editor_) return;
+    const map = this.editor_.getHeadingsByLineNumber();
+    localStorage.setItem('quicktext_headings', JSON.stringify(map));
+  };
+
+  // Restore heading line map from localStorage
+  const restoreHeadings = () => {
+    if (!this.editor_) return;
+    try {
+      const saved = localStorage.getItem('quicktext_headings');
+      if (saved) {
+        const map = JSON.parse(saved);
+        this.editor_.restoreHeadingsByLineNumber(map);
+      }
+    } catch (e) { /* ignore parse errors */ }
+  };
+
+  /**
+   * Apply heading style:
+   * - If text is selected → apply mark decoration to the selection only
+   * - If no selection (cursor) → apply line decoration to the whole line
+   */
+  const applyHeading = (level) => {
+    const view = this.editor_?.editorView_;
+    if (!view) return;
+    const state = view.state;
+    const sel = state.selection.main;
+
+    if (!sel.empty) {
+      // Selection exists: apply/remove mark decoration on the selected range only
+      if (level === 0) {
+        // Remove heading styles from selection
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'font-size');
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'font-weight');
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'line-height');
+      } else {
+        // First remove existing heading styles, then apply new ones
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'font-size');
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'font-weight');
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'line-height');
+        this.editor_.applyStyleToRange(sel.from, sel.to, HEADING_MARK_STYLES[level]);
+      }
+    } else {
+      // No selection: apply line decoration to the whole cursor line
+      const pos = sel.head;
+      this.editor_.setHeadingOnLine(pos, level);
+    }
+
+    // Persist heading assignments
+    saveHeadings();
+    this.editor_.focus();
+  };
+
+  // Update heading select to reflect the heading level at cursor/selection.
+  const updateHeadingSelect = () => {
+    if (!headingSelect || !this.editor_) return;
+    const view = this.editor_.editorView_;
+    if (!view) return;
+    const sel = view.state.selection.main;
+    // Always read from the line decoration (cursor line)
+    const level = this.editor_.getHeadingOnLine(sel.head);
+    headingSelect.value = String(level);
+  };
+
+  if (headingSelect) {
+    headingSelect.addEventListener('change', (e) => {
+      applyHeading(Number.parseInt(e.target.value));
+    });
+  }
+
+  // Update heading select whenever the cursor moves or the document changes
+  setTimeout(() => {
+    const view = this.editor_?.editorView_;
+    if (view && headingSelect) {
+      view.dom.addEventListener('click', updateHeadingSelect);
+      view.dom.addEventListener('keyup', updateHeadingSelect);
+      view.dom.addEventListener('mouseup', updateHeadingSelect);
+    }
+  }, 200);
 
   const updateStyleButtons = () => {
     boldBtn.style.backgroundColor = isBold ? 'var(--ta-highlight-color)' : 'transparent';
@@ -157,7 +306,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     if (!editorEl) return;
     
     const font = fontFamilySelect.value;
-    
     editorEl.style.setProperty('--ta-editor-font-family', font);
     
     if (isBold) {
@@ -172,12 +320,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       editorEl.style.removeProperty('--ta-editor-font-style');
     }
     
-    if (savedColor) {
-      editorEl.style.setProperty('--ta-editor-text-color', savedColor);
-    } else {
-      editorEl.style.removeProperty('--ta-editor-text-color');
-    }
-    
     // Apply alignment to CodeMirror content
     const currentAlign = localStorage.getItem('quicktext_text_align') || 'left';
     const cmContent = editorEl.querySelector('.cm-content');
@@ -185,85 +327,81 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       cmContent.style.textAlign = currentAlign;
     }
     
-    updateColorPickerUI();
     updateStyleButtons();
   };
 
-  // Apply color to selected text only
-  const applyColorToSelection = (color) => {
-    try {
-      // Get browser selection
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
-      
-      const range = selection.getRangeAt(0);
-      if (range.collapsed) return; // No actual selection
-      
-      // Wrap selection in a span with the color
-      const span = document.createElement('span');
-      span.style.color = color;
-      span.textContent = range.toString();
-      
-      range.deleteContents();
-      range.insertNode(span);
-      
-      // Clear selection after applying
-      selection.removeAllRanges();
-    } catch (e) {
-      console.error('Error applying color to selection:', e);
-    }
-  };
-
-  // Apply initially (might need a slight delay for CodeMirror to render)
+  // Apply format settings on load and whenever CodeMirror re-renders its content div.
+  // Use a MutationObserver so we catch the exact moment .cm-content appears in the DOM.
+  const editorContainer = document.getElementById('editor');
+  if (editorContainer) {
+    const observer = new MutationObserver(() => {
+      if (editorContainer.querySelector('.cm-content')) {
+        applyFormat();
+      }
+    });
+    observer.observe(editorContainer, { childList: true, subtree: true });
+  }
+  // Apply immediately and at intervals to ensure format is applied
+  applyFormat();
   setTimeout(applyFormat, 100);
+  setTimeout(applyFormat, 500);
+
+  // Restore headings AFTER the first tab is loaded (switchtab fires after setSession)
+  // This ensures headings are applied to the correct document state.
+  let headingsRestoredOnce = false;
+  $(document).bind('switchtab', () => {
+    if (!headingsRestoredOnce) {
+      headingsRestoredOnce = true;
+      // Small delay to ensure the state is fully set
+      setTimeout(restoreHeadings, 50);
+    }
+    setTimeout(applyFormat, 50);
+  });
 
   fontFamilySelect.addEventListener('change', (e) => {
-    localStorage.setItem('quicktext_font_family', e.target.value);
-    applyFormat();
-  });
-
-  textColorInput.addEventListener('input', (e) => {
-    savedColor = e.target.value;
-    localStorage.setItem('quicktext_text_color', savedColor);
-    
-    // Check if there's a text selection in the editor
-    const view = this.editor_?.editorView_;
-    const hasSelection = view && !view.state.selection.main.empty;
-    
-    if (hasSelection) {
-      // Apply color to selected text only - don't change global color
-      applyColorToSelection(savedColor);
+    if (applyStyleToActiveSelection({ 'font-family': e.target.value })) {
+      // Reset select to global value
+      e.target.value = localStorage.getItem('quicktext_font_family') || 'monospace';
     } else {
-      // No selection - this would set the color for future typing (like Google Docs)
-      // For now, don't apply any color to avoid changing all text
+      // No selection - change global font family
+      localStorage.setItem('quicktext_font_family', e.target.value);
+      applyFormat();
     }
   });
-  
+
   boldBtn.addEventListener('click', () => {
-    isBold = !isBold;
-    localStorage.setItem('quicktext_text_bold', isBold);
-    applyFormat();
+    const sel = getActiveSelection();
+    if (sel && sel.from !== sel.to && this.editor_) {
+      // Toggle bold on selection: remove if already bold, add if not
+      if (this.editor_.hasStyleInRange(sel.from, sel.to, 'font-weight')) {
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'font-weight');
+      } else {
+        this.editor_.applyStyleToRange(sel.from, sel.to, { 'font-weight': 'bold' });
+      }
+    } else {
+      // No selection - toggle global bold
+      isBold = !isBold;
+      localStorage.setItem('quicktext_text_bold', isBold);
+      applyFormat();
+    }
   });
 
   italicBtn.addEventListener('click', () => {
-    isItalic = !isItalic;
-    localStorage.setItem('quicktext_text_italic', isItalic);
-    applyFormat();
+    const sel = getActiveSelection();
+    if (sel && sel.from !== sel.to && this.editor_) {
+      // Toggle italic on selection: remove if already italic, add if not
+      if (this.editor_.hasStyleInRange(sel.from, sel.to, 'font-style')) {
+        this.editor_.removeStyleFromRange(sel.from, sel.to, 'font-style');
+      } else {
+        this.editor_.applyStyleToRange(sel.from, sel.to, { 'font-style': 'italic' });
+      }
+    } else {
+      // No selection - toggle global italic
+      isItalic = !isItalic;
+      localStorage.setItem('quicktext_text_italic', isItalic);
+      applyFormat();
+    }
   });
-  
-  // Add a reset color button
-  const resetColorBtn = document.createElement('button');
-  resetColorBtn.className = 'mdc-icon-button material-icons';
-  resetColorBtn.style.cssText = 'width: 32px; height: 32px; padding: 4px; font-size: 18px; margin-left: 2px; border-radius: 50%;';
-  resetColorBtn.title = 'Réinitialiser la couleur';
-  resetColorBtn.textContent = 'format_color_reset';
-  resetColorBtn.addEventListener('click', () => {
-    savedColor = '';
-    localStorage.removeItem('quicktext_text_color');
-    // Remove color from selected text
-    applyColorToSelection('');
-  });
-  textColorInput.parentNode.insertBefore(resetColorBtn, textColorInput.nextSibling);
 
   const setAlign = (align) => {
     localStorage.setItem('quicktext_text_align', align);
@@ -312,14 +450,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     }
   });
   
-  // Re-apply alignment when switching tabs (since CodeMirror might recreate the content div)
-  $(document).bind('switchtab', () => {
-    setTimeout(() => {
-      const align = localStorage.getItem('quicktext_text_align') || 'left';
-      const cmContent = document.querySelector('.cm-content');
-      if (cmContent) cmContent.style.textAlign = align;
-    }, 50);
-  });
 };
 
 /**

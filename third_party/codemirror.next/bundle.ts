@@ -91,13 +91,15 @@ import {
   selectMatches,
   setSearchQuery,
 } from '@codemirror/search';
-import { Compartment, countColumn, EditorSelection, EditorState, Text } from '@codemirror/state';
+import { Compartment, countColumn, EditorSelection, EditorState, StateEffect, StateField, Text } from '@codemirror/state';
 import {
+  Decoration,
   drawSelection,
   dropCursor,
   EditorView,
   keymap,
   lineNumbers,
+  ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
@@ -169,14 +171,18 @@ const CodeMirrorNext = {
     countColumn,
     EditorSelection,
     EditorState,
+    StateEffect,
+    StateField,
     Text,
   },
   view: {
+    Decoration,
     drawSelection,
     dropCursor,
     EditorView,
     keymap,
     lineNumbers,
+    ViewPlugin,
     ViewUpdate,
   },
 } as const;

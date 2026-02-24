@@ -18,6 +18,20 @@
   <link href="third_party/material-design-icons/iconfont/material-icons.css" rel="stylesheet">
   <link href="css/app.css" rel="stylesheet">
   <link href="css/print.css" rel="stylesheet" media="print">
+  <!-- Apply theme immediately to prevent white flash before JS loads -->
+  <script>
+    (function() {
+      try {
+        // Try to read saved theme from chrome.storage via a sync-accessible fallback
+        var saved = localStorage.getItem('quicktext_theme_hint');
+        var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme-init', theme);
+        document.addEventListener('DOMContentLoaded', function() {
+          document.body.setAttribute('theme', theme);
+        });
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
   <div id="window-container">
@@ -198,21 +212,18 @@
           </li>
         </ul>
       </div>
-      <footer class="app-footer">
-        <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> © 2026
-      </footer>
     </div>
     <div id="main-container">
       <header>
         <button class="mdc-icon-button material-icons" id="toggle-sidebar" i18n-values="title:openSidebarButton;aria-label:openSidebarButton">menu</button>
         
-        <div class="format-toolbar" style="display: flex; align-items: center; margin-left: 10px; gap: 2px;">
-          <button class="mdc-icon-button material-icons" id="cut-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Couper (Ctrl+X)">content_cut</button>
-          <button class="mdc-icon-button material-icons" id="copy-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Copier (Ctrl+C)">content_copy</button>
-          <button class="mdc-icon-button material-icons" id="paste-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Coller (Ctrl+V)">content_paste</button>
-          <div style="width: 1px; height: 16px; background: var(--ta-divider-color); margin: 0 5px;"></div>
+        <div class="format-toolbar">
+          <button class="toolbar-btn mdc-icon-button material-icons" id="cut-btn" title="Couper (Ctrl+X)">content_cut</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="copy-btn" title="Copier (Ctrl+C)">content_copy</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="paste-btn" title="Coller (Ctrl+V)">content_paste</button>
+          <div class="toolbar-divider"></div>
           <label for="font-family-select" class="sr-only">Police</label>
-          <select id="font-family-select" aria-label="Police" style="height: 24px; background: var(--ta-background-color); color: var(--ta-editor-text-color); border: 1px solid var(--ta-divider-color); border-radius: 4px; font-size: 12px;">
+          <select id="font-family-select" class="toolbar-select" aria-label="Police">
             <option value="monospace">Monospace</option>
             <option value="sans-serif">Sans-serif</option>
             <option value="serif">Serif</option>
@@ -220,14 +231,23 @@
             <option value="Arial, Helvetica, sans-serif">Arial</option>
             <option value="'Times New Roman', Times, serif">Times New Roman</option>
           </select>
-          <input type="number" id="font-size-input" class="font-size-input" value="14" min="8" max="72" title="Taille de police">
-          <input type="color" id="text-color-input" value="#000000" style="height: 24px; width: 24px; padding: 0; border: none; background: transparent; cursor: pointer; margin-left: 5px;" title="Couleur du texte">
-          <button class="mdc-icon-button material-icons" id="bold-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; margin-left: 5px; border-radius: 50%;" title="Gras">format_bold</button>
-          <button class="mdc-icon-button material-icons" id="italic-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Italique">format_italic</button>
-          <div style="width: 1px; height: 16px; background: var(--ta-divider-color); margin: 0 5px;"></div>
-          <button class="mdc-icon-button material-icons" id="align-left-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Aligner à gauche">format_align_left</button>
-          <button class="mdc-icon-button material-icons" id="align-center-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Centrer">format_align_center</button>
-          <button class="mdc-icon-button material-icons" id="align-right-btn" style="width: 32px; height: 32px; padding: 4px; font-size: 18px; border-radius: 50%;" title="Aligner à droite">format_align_right</button>
+          <label for="heading-select" class="sr-only">Style de titre</label>
+          <select id="heading-select" class="toolbar-select toolbar-select--heading" aria-label="Style de titre" title="Style de titre">
+            <option value="0">Corps</option>
+            <option value="1">Titre (H1)</option>
+            <option value="2">Sous-titre (H2)</option>
+            <option value="3">Rubrique (H3)</option>
+            <option value="4">Sous-rubrique (H4)</option>
+            <option value="5">Section (H5)</option>
+            <option value="6">Sous-section (H6)</option>
+          </select>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="bold-btn" title="Gras">format_bold</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="italic-btn" title="Italique">format_italic</button>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="align-left-btn" title="Aligner à gauche">format_align_left</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="align-center-btn" title="Centrer">format_align_center</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="align-right-btn" title="Aligner à droite">format_align_right</button>
         </div>
 
         <div class="search-container">
@@ -250,7 +270,7 @@
               title="Installer l'application"
               style="display: none;">download</button>
         </div>
-        <div id="title-filename" i18n-content="errorTitle"></div>
+        <div id="title-filename"></div>
         <button
             class="mdc-icon-button material-icons"
             id="window-minimize"
@@ -268,6 +288,19 @@
       <div id="editor" role="main" aria-label="Zone de texte principale" aria-labelledby="title-filename"></div>
     </div> <!-- main-container -->
   </div> <!-- window-container -->
+
+  <!-- Full-width bottom bar: status left, copyright center, encoding right -->
+  <div id="status-bar">
+    <span class="status-item" id="status-position">Ln 1, Col 1</span>
+    <span class="status-sep"></span>
+    <span class="status-item" id="status-chars">0 caractère</span>
+    <span class="status-spacer"></span>
+    <span class="status-copyright">
+      Développé par <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> © 2026 • Open Source &amp; Libre
+    </span>
+    <span class="status-spacer"></span>
+    <span class="status-item" id="status-encoding">UTF-8</span>
+  </div>
 
   <div id="dialog-container">
     <div class="dialog-window">

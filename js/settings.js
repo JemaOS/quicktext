@@ -39,7 +39,7 @@ Settings.AREA = 'sync';
 Settings.SETTINGS = {
   'alwaysontop': {'default': false, 'type': 'boolean', 'widget': 'checkbox'},
   'fontsize': {'default': 14, 'type': 'number', 'widget': 'number'},
-  'linenumbers': {'default': true, 'type': 'boolean', 'widget': 'checkbox'},
+  'linenumbers': {'default': false, 'type': 'boolean', 'widget': 'checkbox'},
   'sidebaropen': {'default': false, 'type': 'boolean', 'widget': null},
   'sidebarwidth': {'default': 220, 'type': 'integer', 'widget': null},
   'smartindent': {'default': true, 'type': 'boolean', 'widget': 'checkbox'},

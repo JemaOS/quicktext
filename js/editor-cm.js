@@ -183,11 +183,165 @@ EditorCodeMirror.EXTENSION_TO_MODE = {
   ]);
 }
 
+/**
+ * Initialize the decoration system for inline text styling.
+ * Creates StateEffect, StateField, and ViewPlugin for managing style decorations.
+ * Called once before the first editor state is created.
+ */
+EditorCodeMirror.initDecorationSystem_ = function() {
+  if (EditorCodeMirror._decorationSystemInitialized) return;
+  EditorCodeMirror._decorationSystemInitialized = true;
+  
+  const CodeMirror = window.CodeMirror;
+  const { StateEffect, StateField } = CodeMirror.state;
+  const { Decoration, ViewPlugin } = CodeMirror.view;
+  
+  // StateEffect to add a style decoration to a range
+  EditorCodeMirror.addStyleEffect = StateEffect.define();
+  // StateEffect to remove decorations in a range that match a CSS property
+  EditorCodeMirror.removeStyleEffect = StateEffect.define();
+  // StateEffect to clear all style decorations
+  EditorCodeMirror.clearStylesEffect = StateEffect.define();
+  
+  // StateField that stores the set of style decorations
+  EditorCodeMirror.styleDecorationField = StateField.define({
+    create() {
+      return Decoration.none;
+    },
+    update(decorations, tr) {
+      // Map existing decorations through document changes
+      decorations = decorations.map(tr.changes);
+      
+      for (const effect of tr.effects) {
+        if (effect.is(EditorCodeMirror.addStyleEffect)) {
+          const { from, to, style } = effect.value;
+          // Create a mark decoration with inline style
+          const mark = Decoration.mark({ attributes: { style } });
+          decorations = decorations.update({
+            add: [mark.range(from, to)],
+            sort: true,
+          });
+        } else if (effect.is(EditorCodeMirror.removeStyleEffect)) {
+          const { from, to, cssProperty } = effect.value;
+          // Collect decorations that need to be modified (strip one CSS property)
+          const toAdd = [];
+          decorations = decorations.update({
+            filter: (dFrom, dTo, deco) => {
+              // Keep decoration if it doesn't overlap the range
+              if (dTo <= from || dFrom >= to) return true;
+              const style = deco.spec?.attributes?.style || '';
+              if (!style.includes(cssProperty)) return true; // doesn't have the property, keep
+              // Strip the specific CSS property from the style string
+              const newStyle = style
+                .split(';')
+                .map(s => s.trim())
+                .filter(s => s && !s.toLowerCase().startsWith(cssProperty.toLowerCase()))
+                .join('; ');
+              if (newStyle) {
+                // Re-add with remaining properties
+                toAdd.push(Decoration.mark({ attributes: { style: newStyle } }).range(dFrom, dTo));
+              }
+              return false; // remove original
+            },
+          });
+          if (toAdd.length > 0) {
+            decorations = decorations.update({ add: toAdd, sort: true });
+          }
+        } else if (effect.is(EditorCodeMirror.clearStylesEffect)) {
+          decorations = Decoration.none;
+        }
+      }
+      return decorations;
+    },
+    provide: field => CodeMirror.view.EditorView.decorations.from(field),
+  });
+
+  // ── Heading line decoration system ──────────────────────────────────────────
+  // Uses Decoration.line() so the style covers the whole line and expands as
+  // the user types new characters.
+
+  // StateEffect: set heading level for a line (by its start position)
+  EditorCodeMirror.setHeadingEffect = StateEffect.define();
+
+  // Heading level -> CSS style string
+  EditorCodeMirror.HEADING_CSS = {
+    1: 'font-size:2em;font-weight:bold;line-height:1.3',
+    2: 'font-size:1.5em;font-weight:bold;line-height:1.3',
+    3: 'font-size:1.25em;font-weight:bold;line-height:1.3',
+    4: 'font-size:1.1em;font-weight:bold;line-height:1.3',
+    5: 'font-size:1em;font-weight:bold;line-height:1.3',
+    6: 'font-size:0.9em;font-weight:bold;line-height:1.3',
+  };
+
+  /**
+   * StateField that stores heading line decorations.
+   * Internally keeps a Map<lineFrom, level> so we can rebuild decorations
+   * after document changes (line positions shift when text is inserted/deleted).
+   */
+  EditorCodeMirror.headingDecorationField = StateField.define({
+    create() {
+      // { decos: DecorationSet, lineMap: Map<lineFrom, level> }
+      return { decos: Decoration.none, lineMap: new Map() };
+    },
+    update(state, tr) {
+      let { decos, lineMap } = state;
+
+      // Remap decoration positions through document changes
+      decos = decos.map(tr.changes);
+
+      // Remap lineMap keys through document changes
+      if (tr.docChanged) {
+        const newMap = new Map();
+        lineMap.forEach((level, oldFrom) => {
+          const newFrom = tr.changes.mapPos(oldFrom, 1);
+          newMap.set(newFrom, level);
+        });
+        lineMap = newMap;
+      }
+
+      // Process setHeadingEffect effects
+      for (const effect of tr.effects) {
+        if (effect.is(EditorCodeMirror.setHeadingEffect)) {
+          const { lineFrom, level } = effect.value;
+          if (level === 0) {
+            lineMap.delete(lineFrom);
+          } else {
+            lineMap.set(lineFrom, level);
+          }
+        }
+      }
+
+      // Rebuild decoration set from lineMap
+      if (tr.docChanged || tr.effects.some(e => e.is(EditorCodeMirror.setHeadingEffect))) {
+        const entries = [];
+        lineMap.forEach((level, from) => {
+          const css = EditorCodeMirror.HEADING_CSS[level];
+          if (css) {
+            entries.push(Decoration.line({ attributes: { style: css } }).range(from));
+          }
+        });
+        entries.sort((a, b) => a.from - b.from);
+        decos = Decoration.set(entries);
+      }
+
+      return { decos, lineMap };
+    },
+    provide: field =>
+      CodeMirror.view.EditorView.decorations.from(field, s => s.decos),
+  });
+};
+
 EditorCodeMirror.prototype.newState = function(opt_content) {
   const CodeMirror = window.CodeMirror;
+  
+  // Initialize decoration system if not done yet
+  EditorCodeMirror.initDecorationSystem_();
+  
   return CodeMirror.state.EditorState.create({
     doc: opt_content || '',
     extensions: [
+      EditorCodeMirror.styleDecorationField,
+      EditorCodeMirror.headingDecorationField,
       CodeMirror.commands.history({
         minDepth: 10000,
       }),
@@ -427,6 +581,27 @@ EditorCodeMirror.prototype.onViewUpdate = function(update) {
   if (update.docChanged) {
     $.event.trigger('docchange');
   }
+  // Track the last non-empty selection so toolbar can use it even after focus loss
+  const sel = update.state.selection.main;
+  if (!sel.empty) {
+    this.lastSelection_ = { from: sel.from, to: sel.to };
+  }
+};
+
+/**
+ * Get the last non-empty selection, or null if there was none.
+ * This persists even after the editor loses focus.
+ * @return {{from: number, to: number}|null}
+ */
+EditorCodeMirror.prototype.getLastSelection = function() {
+  return this.lastSelection_ || null;
+};
+
+/**
+ * Clear the last saved selection (call when user clicks without selecting).
+ */
+EditorCodeMirror.prototype.clearLastSelection = function() {
+  this.lastSelection_ = null;
 };
 
 EditorCodeMirror.prototype.disable = function() {
@@ -440,3 +615,180 @@ EditorCodeMirror.prototype.enable = function() {
     effects: this.editableCompartment_.reconfigure(window.CodeMirror.view.EditorView.editable.of(true))
   });
 };
+
+/**
+ * Apply a CSS style to the currently selected text using CodeMirror decorations.
+ * This is a visual-only change - it does not modify the file content.
+ *
+ * @param {Object} styleObj - CSS properties to apply, e.g. {color: '#ff0000', 'font-size': '20px'}
+ */
+EditorCodeMirror.prototype.applyStyleToSelection = function(styleObj) {
+  const view = this.editorView_;
+  if (!view) return;
+  
+  const selection = view.state.selection.main;
+  if (selection.empty) return; // No selection, nothing to do
+  
+  // Build CSS string from style object
+  const cssString = Object.entries(styleObj)
+    .filter(([k, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('; ');
+  
+  if (!cssString) return;
+  
+  view.dispatch({
+    effects: EditorCodeMirror.addStyleEffect.of({
+      from: selection.from,
+      to: selection.to,
+      style: cssString,
+    })
+  });
+};
+
+/**
+ * Apply a CSS style to a specific range of text using CodeMirror decorations.
+ * This is a visual-only change - it does not modify the file content.
+ *
+ * @param {number} from - Start position
+ * @param {number} to - End position
+ * @param {Object} styleObj - CSS properties to apply
+ */
+EditorCodeMirror.prototype.applyStyleToRange = function(from, to, styleObj) {
+  const view = this.editorView_;
+  if (!view || from === to) return;
+  
+  // Build CSS string from style object
+  const cssString = Object.entries(styleObj)
+    .filter(([k, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('; ');
+  
+  if (!cssString) return;
+  
+  view.dispatch({
+    effects: EditorCodeMirror.addStyleEffect.of({ from, to, style: cssString })
+  });
+};
+
+/**
+ * Check if a CSS property is applied to any decoration in the given range.
+ * @param {number} from
+ * @param {number} to
+ * @param {string} cssProperty - e.g. 'font-weight', 'font-style'
+ * @return {boolean}
+ */
+EditorCodeMirror.prototype.hasStyleInRange = function(from, to, cssProperty) {
+  const view = this.editorView_;
+  if (!view) return false;
+  
+  const decorations = view.state.field(EditorCodeMirror.styleDecorationField, false);
+  if (!decorations) return false;
+  
+  let found = false;
+  decorations.between(from, to, (dFrom, dTo, deco) => {
+    const style = deco.spec?.attributes?.style || '';
+    if (style.includes(cssProperty)) {
+      found = true;
+      return false; // stop iteration
+    }
+  });
+  return found;
+};
+
+/**
+ * Remove decorations with a specific CSS property from a range.
+ * @param {number} from
+ * @param {number} to
+ * @param {string} cssProperty - e.g. 'font-weight', 'font-style'
+ */
+EditorCodeMirror.prototype.removeStyleFromRange = function(from, to, cssProperty) {
+  const view = this.editorView_;
+  if (!view) return;
+  
+  view.dispatch({
+    effects: EditorCodeMirror.removeStyleEffect.of({ from, to, cssProperty })
+  });
+};
+
+/**
+ * @return {boolean} Whether there is a non-empty selection in the editor.
+ */
+EditorCodeMirror.prototype.hasSelection = function() {
+  const view = this.editorView_;
+  if (!view) return false;
+  return !view.state.selection.main.empty;
+};
+
+/**
+ * Set the heading level (1-6) or 0 for body text on the line containing pos.
+ * Uses Decoration.line() so the style covers the whole line and expands as
+ * the user types.
+ *
+ * @param {number} pos - Any character position on the target line.
+ * @param {number} level - 0 = body, 1-6 = heading level.
+ */
+EditorCodeMirror.prototype.setHeadingOnLine = function(pos, level) {
+  const view = this.editorView_;
+  if (!view) return;
+  const line = view.state.doc.lineAt(pos);
+  view.dispatch({
+    effects: EditorCodeMirror.setHeadingEffect.of({ lineFrom: line.from, level })
+  });
+};
+
+/**
+ * Get the heading level (0-6) of the line containing pos.
+ * @param {number} pos
+ * @return {number}
+ */
+EditorCodeMirror.prototype.getHeadingOnLine = function(pos) {
+  const view = this.editorView_;
+  if (!view) return 0;
+  const line = view.state.doc.lineAt(pos);
+  const fieldState = view.state.field(EditorCodeMirror.headingDecorationField, false);
+  if (!fieldState) return 0;
+  return fieldState.lineMap.get(line.from) || 0;
+};
+
+/**
+ * Get all heading assignments as a plain object { lineNumber: level }.
+ * Line numbers are 1-based and stable across edits (unlike character positions).
+ * @return {Object}
+ */
+EditorCodeMirror.prototype.getHeadingsByLineNumber = function() {
+  const view = this.editorView_;
+  if (!view) return {};
+  const fieldState = view.state.field(EditorCodeMirror.headingDecorationField, false);
+  if (!fieldState) return {};
+  const result = {};
+  fieldState.lineMap.forEach((level, from) => {
+    try {
+      const lineNum = view.state.doc.lineAt(from).number;
+      result[lineNum] = level;
+    } catch (e) { /* position out of range, skip */ }
+  });
+  return result;
+};
+
+/**
+ * Restore heading assignments from a plain object { lineNumber: level }.
+ * @param {Object} headingsByLine
+ */
+EditorCodeMirror.prototype.restoreHeadingsByLineNumber = function(headingsByLine) {
+  const view = this.editorView_;
+  if (!view) return;
+  const doc = view.state.doc;
+  const effects = [];
+  for (const [lineNumStr, level] of Object.entries(headingsByLine)) {
+    const lineNum = Number(lineNumStr);
+    if (lineNum >= 1 && lineNum <= doc.lines && level > 0) {
+      const line = doc.line(lineNum);
+      effects.push(EditorCodeMirror.setHeadingEffect.of({ lineFrom: line.from, level }));
+    }
+  }
+  if (effects.length > 0) {
+    view.dispatch({ effects });
+  }
+};
+
