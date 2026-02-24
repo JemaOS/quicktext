@@ -119,6 +119,30 @@
       };
     },
 
+    // Remove a retained file handle
+    removeRetainedEntry: function(entry, callback) {
+      if (!entry || !entry.name) {
+        if (callback) callback();
+        return;
+      }
+      
+      const request = indexedDB.open('QuickTextFiles', 1);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(['files'], 'readwrite');
+        const store = transaction.objectStore('files');
+        const deleteReq = store.delete(entry.name);
+        deleteReq.onsuccess = function() {
+          console.log('Removed entry from IndexedDB:', entry.name);
+          if (callback) callback();
+        };
+        deleteReq.onerror = function() {
+          console.error('Failed to remove entry from IndexedDB:', entry.name);
+          if (callback) callback();
+        };
+      };
+    },
+
     retainEntry: function(entry) {
       // For PWA entries, store in IndexedDB
       if (entry && entry.name) {
@@ -472,8 +496,13 @@
             if (cb) cb(entry);
           },
           removeEntry: function(entry) {
-            console.log('Mock background: removeEntry called');
-            // For PWA, entries are handled via localStorage
+            console.log('Mock background: removeEntry called', entry);
+            // For PWA, remove from IndexedDB
+            if (entry && entry.name) {
+              chrome.fileSystem.removeRetainedEntry(entry, function() {
+                console.log('Entry removed from IndexedDB');
+              });
+            }
           }
         }
       });
