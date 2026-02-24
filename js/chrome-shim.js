@@ -470,6 +470,10 @@
           copyFileEntry: function(entry, cb) {
             // Just return the entry in PWA
             if (cb) cb(entry);
+          },
+          removeEntry: function(entry) {
+            console.log('Mock background: removeEntry called');
+            // For PWA, entries are handled via localStorage
           }
         }
       });
