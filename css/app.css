@@ -151,8 +151,6 @@ body {
   font-family: "Helvetica Neue", Helvetica, Arial, "Open Sans", sans-serif;
   font-size: 13px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
   height: 100vh;
 }
 
@@ -166,13 +164,13 @@ img {
 }
 
 #window-container {
-  -webkit-box-align: stretch;
-  -webkit-box-orient: horizontal;
   display: flex;
   flex-direction: row;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   -webkit-user-select: none;
 }
 

@@ -286,21 +286,21 @@
       </header>
 
       <div id="editor" role="main" aria-label="Zone de texte principale" aria-labelledby="title-filename"></div>
+
+      <!-- Status bar inside main-container so it's part of the flex column -->
+      <div id="status-bar">
+        <span class="status-item" id="status-position">Ln 1, Col 1</span>
+        <span class="status-sep"></span>
+        <span class="status-item" id="status-chars">0 caractère</span>
+        <span class="status-spacer"></span>
+        <span class="status-copyright">
+          Développé par <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> © 2026 • Open Source &amp; Libre
+        </span>
+        <span class="status-spacer"></span>
+        <span class="status-item" id="status-encoding">UTF-8</span>
+      </div>
     </div> <!-- main-container -->
   </div> <!-- window-container -->
-
-  <!-- Full-width bottom bar: status left, copyright center, encoding right -->
-  <div id="status-bar">
-    <span class="status-item" id="status-position">Ln 1, Col 1</span>
-    <span class="status-sep"></span>
-    <span class="status-item" id="status-chars">0 caractère</span>
-    <span class="status-spacer"></span>
-    <span class="status-copyright">
-      Développé par <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> © 2026 • Open Source &amp; Libre
-    </span>
-    <span class="status-spacer"></span>
-    <span class="status-item" id="status-encoding">UTF-8</span>
-  </div>
 
   <div id="dialog-container">
     <div class="dialog-window">
