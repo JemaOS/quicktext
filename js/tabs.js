@@ -331,6 +331,13 @@ Tabs.prototype.closeTab_ = function(tab) {
   }
   $.event.trigger('tabclosed', tab);
 
+  // Remove the file entry from background page to prevent re-opening on refresh
+  if (tab.getEntry()) {
+    chrome.runtime.getBackgroundPage(function(bg) {
+      bg.background.removeEntry(tab.getEntry());
+    });
+  }
+
   if (isLastTab) {
     // Last tab was closed — clear editor and reset state
     this.currentTab_ = null;

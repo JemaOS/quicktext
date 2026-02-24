@@ -246,6 +246,17 @@ Background.prototype.copyFileEntry = function(entry, callback) {
   chrome.fileSystem.getWritableEntry(entry, callback);
 };
 
+/**
+ * @param {FileEntry} entry
+ * Remove a file entry from the list of entries to open.
+ */
+Background.prototype.removeEntry = function(entry) {
+  const index = this.entriesToOpen_.indexOf(entry);
+  if (index > -1) {
+    this.entriesToOpen_.splice(index, 1);
+  }
+};
+
 const background = new Background();
 chrome.app.runtime.onLaunched.addListener(background.launch.bind(background));
 
@@ -255,3 +266,4 @@ window['background'] = background;
 Background.prototype['copyFileEntry'] = Background.prototype.copyFileEntry;
 Background.prototype['onWindowReady'] = Background.prototype.onWindowReady;
 Background.prototype['newWindow'] = Background.prototype.newWindow;
+Background.prototype['removeEntry'] = Background.prototype.removeEntry;
