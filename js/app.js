@@ -209,23 +209,34 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     6: { 'font-size': '0.9em',  'font-weight': 'bold',   'line-height': '1.3' },
   };
 
-  // Save heading line map to localStorage
-  const saveHeadings = () => {
+  // Save all formatting (headings + mark decorations) to localStorage
+  const saveFormatting = () => {
     if (!this.editor_) return;
-    const map = this.editor_.getHeadingsByLineNumber();
-    localStorage.setItem('quicktext_headings', JSON.stringify(map));
+    // Save heading line map
+    const headings = this.editor_.getHeadingsByLineNumber();
+    localStorage.setItem('quicktext_headings', JSON.stringify(headings));
+    // Save mark (inline) decorations
+    const marks = this.editor_.getMarkDecorations();
+    localStorage.setItem('quicktext_marks', JSON.stringify(marks));
   };
 
-  // Restore heading line map from localStorage
-  const restoreHeadings = () => {
+  // Restore all formatting from localStorage
+  const restoreFormatting = () => {
     if (!this.editor_) return;
     try {
-      const saved = localStorage.getItem('quicktext_headings');
-      if (saved) {
-        const map = JSON.parse(saved);
+      const savedHeadings = localStorage.getItem('quicktext_headings');
+      if (savedHeadings) {
+        const map = JSON.parse(savedHeadings);
         this.editor_.restoreHeadingsByLineNumber(map);
       }
-    } catch (e) { /* ignore parse errors */ }
+    } catch (e) { /* ignore */ }
+    try {
+      const savedMarks = localStorage.getItem('quicktext_marks');
+      if (savedMarks) {
+        const marks = JSON.parse(savedMarks);
+        this.editor_.restoreMarkDecorations(marks);
+      }
+    } catch (e) { /* ignore */ }
   };
 
   /**
@@ -259,8 +270,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       this.editor_.setHeadingOnLine(pos, level);
     }
 
-    // Persist heading assignments
-    saveHeadings();
+    // Persist all formatting
+    saveFormatting();
     this.editor_.focus();
   };
 
@@ -346,17 +357,35 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   setTimeout(applyFormat, 100);
   setTimeout(applyFormat, 500);
 
-  // Restore headings AFTER the first tab is loaded (switchtab fires after setSession)
-  // This ensures headings are applied to the correct document state.
-  let headingsRestoredOnce = false;
+  // Restore formatting AFTER the tab content is fully loaded.
+  // chrome-shim restores tab content with a ~150ms delay, so we wait for
+  // the first docchange event (which fires when content is actually inserted).
+  let formattingRestoredOnce = false;
+  const restoreFormattingOnce = () => {
+    if (formattingRestoredOnce) return;
+    // Only restore if the document has content
+    const view = this.editor_?.editorView_;
+    if (!view || view.state.doc.length === 0) return;
+    formattingRestoredOnce = true;
+    restoreFormatting();
+  };
+
   $(document).bind('switchtab', () => {
-    if (!headingsRestoredOnce) {
-      headingsRestoredOnce = true;
-      // Small delay to ensure the state is fully set
-      setTimeout(restoreHeadings, 50);
-    }
     setTimeout(applyFormat, 50);
+    // Reset restore flag when switching tabs (each tab has its own formatting)
+    // but only restore once per session load
   });
+
+  // Listen for the first document change after load — this is when content is restored
+  $(document).bind('docchange', () => {
+    if (!formattingRestoredOnce) {
+      restoreFormattingOnce();
+    }
+  });
+
+  // Also try after delays as fallback
+  setTimeout(restoreFormattingOnce, 300);
+  setTimeout(restoreFormattingOnce, 600);
 
   fontFamilySelect.addEventListener('change', (e) => {
     if (applyStyleToActiveSelection({ 'font-family': e.target.value })) {
@@ -378,6 +407,7 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       } else {
         this.editor_.applyStyleToRange(sel.from, sel.to, { 'font-weight': 'bold' });
       }
+      saveFormatting();
     } else {
       // No selection - toggle global bold
       isBold = !isBold;
@@ -395,6 +425,7 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       } else {
         this.editor_.applyStyleToRange(sel.from, sel.to, { 'font-style': 'italic' });
       }
+      saveFormatting();
     } else {
       // No selection - toggle global italic
       isItalic = !isItalic;

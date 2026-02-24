@@ -792,3 +792,38 @@ EditorCodeMirror.prototype.restoreHeadingsByLineNumber = function(headingsByLine
   }
 };
 
+/**
+ * Get all mark (inline) style decorations as a serializable array.
+ * Each entry: { from: number, to: number, style: string }
+ * Positions are character offsets in the document.
+ * @return {Array<{from:number, to:number, style:string}>}
+ */
+EditorCodeMirror.prototype.getMarkDecorations = function() {
+  const view = this.editorView_;
+  if (!view) return [];
+  const fieldState = view.state.field(EditorCodeMirror.styleDecorationField, false);
+  if (!fieldState) return [];
+  const result = [];
+  fieldState.between(0, view.state.doc.length, (from, to, deco) => {
+    const style = deco.spec?.attributes?.style;
+    if (style) result.push({ from, to, style });
+  });
+  return result;
+};
+
+/**
+ * Restore mark (inline) style decorations from a serialized array.
+ * @param {Array<{from:number, to:number, style:string}>} marks
+ */
+EditorCodeMirror.prototype.restoreMarkDecorations = function(marks) {
+  const view = this.editorView_;
+  if (!view || !marks || marks.length === 0) return;
+  const docLen = view.state.doc.length;
+  const effects = marks
+    .filter(m => m.from >= 0 && m.to <= docLen && m.from < m.to && m.style)
+    .map(m => EditorCodeMirror.addStyleEffect.of({ from: m.from, to: m.to, style: m.style }));
+  if (effects.length > 0) {
+    view.dispatch({ effects });
+  }
+};
+
