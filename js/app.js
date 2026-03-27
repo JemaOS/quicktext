@@ -150,7 +150,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   const copyBtn = document.getElementById('copy-btn');
   const pasteBtn = document.getElementById('paste-btn');
   
-  const fontFamilySelect = document.getElementById('font-family-select');
   const headingSelect = document.getElementById('heading-select');
   const boldBtn = document.getElementById('bold-btn');
   const italicBtn = document.getElementById('italic-btn');
@@ -159,11 +158,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   const alignRightBtn = document.getElementById('align-right-btn');
 
   // Load saved settings or defaults
-  const savedFont = localStorage.getItem('quicktext_font_family') || 'monospace';
   let isBold = localStorage.getItem('quicktext_text_bold') === 'true';
   let isItalic = localStorage.getItem('quicktext_text_italic') === 'true';
-
-  fontFamilySelect.value = savedFont;
 
   // Restore bold/italic button visual state immediately
   if (boldBtn) boldBtn.style.fontWeight = isBold ? 'bold' : 'normal';
@@ -318,19 +314,11 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   const updateStyleButtons = () => {
     boldBtn.style.backgroundColor = isBold ? 'var(--ta-highlight-color)' : 'transparent';
     italicBtn.style.backgroundColor = isItalic ? 'var(--ta-highlight-color)' : 'transparent';
-    
-    const currentAlign = localStorage.getItem('quicktext_text_align') || 'left';
-    alignLeftBtn.style.backgroundColor = currentAlign === 'left' ? 'var(--ta-highlight-color)' : 'transparent';
-    alignCenterBtn.style.backgroundColor = currentAlign === 'center' ? 'var(--ta-highlight-color)' : 'transparent';
-    alignRightBtn.style.backgroundColor = currentAlign === 'right' ? 'var(--ta-highlight-color)' : 'transparent';
   };
 
   const applyFormat = () => {
     const editorEl = document.getElementById('editor');
     if (!editorEl) return;
-    
-    const font = fontFamilySelect.value;
-    editorEl.style.setProperty('--ta-editor-font-family', font);
     
     if (isBold) {
       editorEl.style.setProperty('--ta-editor-font-weight', 'bold');
@@ -342,13 +330,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       editorEl.style.setProperty('--ta-editor-font-style', 'italic');
     } else {
       editorEl.style.removeProperty('--ta-editor-font-style');
-    }
-    
-    // Apply alignment to CodeMirror content
-    const currentAlign = localStorage.getItem('quicktext_text_align') || 'left';
-    const cmContent = editorEl.querySelector('.cm-content');
-    if (cmContent) {
-      cmContent.style.textAlign = currentAlign;
     }
     
     updateStyleButtons();
@@ -400,17 +381,6 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   setTimeout(restoreFormattingOnce, 300);
   setTimeout(restoreFormattingOnce, 600);
 
-  fontFamilySelect.addEventListener('change', (e) => {
-    if (applyStyleToActiveSelection({ 'font-family': e.target.value })) {
-      // Reset select to global value
-      e.target.value = localStorage.getItem('quicktext_font_family') || 'monospace';
-    } else {
-      // No selection - change global font family
-      localStorage.setItem('quicktext_font_family', e.target.value);
-      applyFormat();
-    }
-  });
-
   boldBtn.addEventListener('click', () => {
     const sel = getActiveSelection();
     if (sel && sel.from !== sel.to && this.editor_) {
@@ -448,10 +418,20 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   });
 
   const setAlign = (align) => {
-    localStorage.setItem('quicktext_text_align', align);
-    const cmContent = document.querySelector('.cm-content');
-    if (cmContent) cmContent.style.textAlign = align;
-    updateStyleButtons();
+    const view = this.editor_?.editorView_;
+    if (!view) return;
+    const state = view.state;
+    const selection = state.selection;
+
+    for (const range of selection.ranges) {
+      const fromLine = state.doc.lineAt(range.from);
+      const toLine = state.doc.lineAt(range.to);
+
+      for (let lineNum = fromLine.number; lineNum <= toLine.number; lineNum++) {
+        const line = state.doc.line(lineNum);
+        this.editor_.setAlignOnLine(line.from, align);
+      }
+    }
   };
 
   alignLeftBtn.addEventListener('click', () => setAlign('left'));

@@ -218,6 +218,26 @@ Tabs.prototype.newWindow = function() {
  * @param {?string} opt_content What text content the tab should contain. Otherwise it starts empty.
  */
 Tabs.prototype.newTab = function(opt_content, opt_entry, opt_id) {
+  // Check for duplicate: if an entry with the same name is already open, switch to it
+  if (opt_entry && opt_entry.name) {
+    for (let i = 0; i < this.tabs_.length; i++) {
+      let existingTab = this.tabs_[i];
+      let existingEntry = existingTab.getEntry();
+      // Match by entry name (primary) or by tab display name (fallback for tabs that lost their entry)
+      let nameMatch = (existingEntry && existingEntry.name === opt_entry.name) ||
+                      (!existingEntry && existingTab.getName() === opt_entry.name);
+      if (nameMatch) {
+        // Update the tab's entry with the new handle (fresh permissions)
+        if (opt_entry.createWritable) {
+          opt_entry.isPWAFile = true;
+          existingTab.setEntry(opt_entry);
+        }
+        this.showTab(existingTab.getId());
+        return;
+      }
+    }
+  }
+
   let id = opt_id || 1;
   while (this.getTabById(id)) {
     id++;
@@ -464,9 +484,6 @@ Tabs.prototype.saveAs = function(opt_tab, opt_callback) {
       {'type': 'saveFile', 'suggestedName': suggestedName},
       function(entry) {
         this.saveEntry_(tab, entry, opt_callback);
-        if (opt_callback) {
-          opt_callback();
-        }
       }.bind(this));
 };
 
@@ -486,6 +503,13 @@ Tabs.prototype.getFilesToRetain = function() {
 };
 
 Tabs.prototype.openFileEntry = function(entry) {
+  // Unwrap: if entry is a wrapper object with a .handle property that is the
+  // actual FileSystemFileHandle, use the handle instead.
+  if (entry && !entry.createWritable && !entry.getFile && entry.handle && entry.handle.createWritable) {
+    entry = entry.handle;
+    entry.isPWAFile = true;
+  }
+  
   // Handle PWA files (File System Access API) - check for getFile method
   if (entry && (entry.isPWAFile || entry.getFile)) {
     this.openPWAFileEntry(entry);
@@ -518,18 +542,34 @@ Tabs.prototype.openFileEntry = function(entry) {
 Tabs.prototype.openPWAFileEntry = function(entry) {
   const self = this;
   
-  // Check if already open
+  // Unwrap: if entry is a wrapper object (e.g. from IndexedDB) with a .handle
+  // property that is the actual FileSystemFileHandle, use the handle instead.
+  // A real FileSystemFileHandle has createWritable and getFile methods.
+  if (!entry.createWritable && !entry.getFile && entry.handle && entry.handle.createWritable) {
+    entry = entry.handle;
+  }
+  
+  entry.isPWAFile = true;
+  
+  // Check if already open by comparing entry name or tab display name
   for (let i = 0; i < this.tabs_.length; i++) {
-    const tab = this.tabs_[i];
-    if (tab.getEntry() && tab.getEntry().name === entry.name) {
-      this.showTab(tab.getId());
+    let existingTab = this.tabs_[i];
+    let existingEntry = existingTab.getEntry();
+    // Match by entry name (primary) or by tab display name (fallback for tabs that lost their entry)
+    let nameMatch = (existingEntry && existingEntry.name === entry.name) ||
+                    (!existingEntry && existingTab.getName() === entry.name);
+    if (nameMatch) {
+      // Update the tab's entry with the new handle (fresh permissions)
+      if (entry.createWritable) {
+        existingTab.setEntry(entry);
+      }
+      this.showTab(existingTab.getId());
       return;
     }
   }
 
   // If entry has content, use it directly
   if (entry.content) {
-    entry.isPWAFile = true;
     this.newTab(entry.content, entry);
     
     // Close empty initial tab if exists

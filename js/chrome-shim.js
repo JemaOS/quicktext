@@ -436,20 +436,30 @@
                         restoreNextTab(index + 1);
                       }).catch(function() {
                         // File no longer accessible, restore as unsaved with last content
+                        // Use the entry name as custom name so duplicate detection can match it
                         app.tabs_.newTab(tabData.content || '', null, tabData.id);
-                        if (tabData.customName) {
-                          const newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
-                          if (newTab) newTab.setName(tabData.customName);
+                        var restoredTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                        if (restoredTab) {
+                          restoredTab.setName(tabData.customName || tabData.entryName || tabData.name);
                         }
                         restoreNextTab(index + 1);
                       });
+                    } else if (tabData.hasEntry && tabData.entryName) {
+                      // Tab had a file entry but handle is no longer in IndexedDB.
+                      // Restore with the entry name as custom name so duplicate detection works.
+                      app.tabs_.newTab(tabData.content || '', null, tabData.id);
+                      var restoredTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                      if (restoredTab) {
+                        restoredTab.setName(tabData.entryName);
+                      }
+                      restoreNextTab(index + 1);
                     } else {
                       // Restore unsaved tab with its content, preserving the original ID
                       app.tabs_.newTab(tabData.content || '', null, tabData.id);
                       // Restore custom name if any
-                      const newTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
-                      if (newTab && tabData.customName) {
-                        newTab.setName(tabData.customName);
+                      var restoredTab = app.tabs_.tabs_[app.tabs_.tabs_.length - 1];
+                      if (restoredTab && tabData.customName) {
+                        restoredTab.setName(tabData.customName);
                       }
                       restoreNextTab(index + 1);
                     }
@@ -623,6 +633,10 @@
 
   // Helper to read file (used by the app)
   window.readFileEntry = function(entry, callback) {
+    // Unwrap wrapper objects from IndexedDB
+    if (!entry.getFile && entry.handle && entry.handle.getFile) {
+      entry = entry.handle;
+    }
     if (entry.getFile) {
       entry.getFile().then(file => {
         file.text().then(content => callback(content));
@@ -640,19 +654,40 @@
 
   // Helper to write file (used by the app)
   window.writeFileEntry = function(entry, content, callback, errorCallback) {
-    console.log('writeFileEntry called, entry:', entry, 'has createWritable:', !!entry.createWritable);
-    if (entry.createWritable) {
-      entry.createWritable().then(writable => {
-        console.log('Using File System Access API to write');
-        // Convert string to Blob for proper writing
-        const blob = new Blob([content], { type: 'text/plain' });
-        writable.write(blob);
-        writable.close().then(() => {
-          console.log('File written successfully');
-          if (callback) callback();
+    // Unwrap: if entry is a wrapper object (from IndexedDB) with a .handle property
+    // that is the actual FileSystemFileHandle, use the handle instead
+    var handle = entry;
+    if (!entry.createWritable && entry.handle && entry.handle.createWritable) {
+      console.log('[writeFileEntry] Unwrapping entry.handle (entry was a wrapper object)');
+      handle = entry.handle;
+    }
+    
+    console.log('[writeFileEntry] entry.name:', handle.name, 'createWritable:', !!handle.createWritable);
+    
+    if (handle.createWritable) {
+      // Request write permission first (needed for handles from showOpenFilePicker)
+      var permissionPromise;
+      if (handle.requestPermission) {
+        permissionPromise = handle.requestPermission({ mode: 'readwrite' });
+      } else {
+        permissionPromise = Promise.resolve('granted');
+      }
+      
+      permissionPromise.then(function(permission) {
+        if (permission !== 'granted') {
+          throw new Error('Write permission denied, got: ' + permission);
+        }
+        return handle.createWritable();
+      }).then(function(writable) {
+        var blob = new Blob([content], { type: 'text/plain' });
+        return writable.write(blob).then(function() {
+          return writable.close();
         });
-      }).catch(err => {
-        console.error('Write error:', err);
+      }).then(function() {
+        console.log('[writeFileEntry] File written successfully:', handle.name);
+        if (callback) callback();
+      }).catch(function(err) {
+        console.error('[writeFileEntry] Write error:', err);
         if (errorCallback) errorCallback(err);
       });
     } else {
@@ -660,7 +695,7 @@
       entry.createWriter(function(writer) {
         writer.onwrite = callback;
         writer.onerror = errorCallback;
-        const blob = new Blob([content], { type: 'text/plain' });
+        var blob = new Blob([content], { type: 'text/plain' });
         writer.write(blob);
       });
     }

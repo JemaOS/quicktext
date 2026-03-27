@@ -329,6 +329,70 @@ EditorCodeMirror.initDecorationSystem_ = function() {
     provide: field =>
       CodeMirror.view.EditorView.decorations.from(field, s => s.decos),
   });
+
+  // ── Alignment line decoration system ───────────────────────────────────────
+  // Uses Decoration.line() so the style covers the whole line and persists
+  // through CodeMirror re-renders (unlike direct DOM manipulation).
+
+  // StateEffect: set alignment for a line (by its start position)
+  EditorCodeMirror.setAlignEffect = StateEffect.define();
+
+  /**
+   * StateField that stores alignment line decorations.
+   * Internally keeps a Map<lineFrom, alignment> so we can rebuild decorations
+   * after document changes (line positions shift when text is inserted/deleted).
+   */
+  EditorCodeMirror.alignDecorationField = StateField.define({
+    create() {
+      return { decos: Decoration.none, lineMap: new Map() };
+    },
+    update(state, tr) {
+      let { decos, lineMap } = state;
+      let changed = false;
+
+      // Remap positions through document changes
+      if (tr.docChanged) {
+        const newMap = new Map();
+        lineMap.forEach((align, oldFrom) => {
+          try {
+            const newFrom = tr.changes.mapPos(oldFrom, 1);
+            newMap.set(newFrom, align);
+          } catch(e) {
+            // Position was deleted, skip
+          }
+        });
+        lineMap = newMap;
+        changed = true;
+      }
+
+      for (const effect of tr.effects) {
+        if (effect.is(EditorCodeMirror.setAlignEffect)) {
+          const { lineFrom, align } = effect.value;
+          if (align === 'left' || !align) {
+            lineMap.delete(lineFrom);
+          } else {
+            lineMap.set(lineFrom, align);
+          }
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        const entries = [];
+        lineMap.forEach((align, from) => {
+          entries.push(
+            Decoration.line({ attributes: { style: `text-align: ${align}` } }).range(from)
+          );
+        });
+        entries.sort((a, b) => a.from - b.from);
+        decos = Decoration.set(entries);
+      }
+
+      return { decos, lineMap };
+    },
+    provide: field =>
+      CodeMirror.view.EditorView.decorations.from(field, s => s.decos),
+  });
 };
 
 EditorCodeMirror.prototype.newState = function(opt_content) {
@@ -342,6 +406,7 @@ EditorCodeMirror.prototype.newState = function(opt_content) {
     extensions: [
       EditorCodeMirror.styleDecorationField,
       EditorCodeMirror.headingDecorationField,
+      EditorCodeMirror.alignDecorationField,
       CodeMirror.commands.history({
         minDepth: 10000,
       }),
@@ -455,6 +520,10 @@ EditorCodeMirror.prototype.setSession = function(editorState, fileExtension) {
  */
 EditorCodeMirror.prototype.getSearch = function() {
   return this.search_;
+};
+
+EditorCodeMirror.prototype.getView = function() {
+  return this.editorView_;
 };
 
 EditorCodeMirror.prototype.focus = function() {
@@ -734,6 +803,22 @@ EditorCodeMirror.prototype.setHeadingOnLine = function(pos, level) {
   const line = view.state.doc.lineAt(pos);
   view.dispatch({
     effects: EditorCodeMirror.setHeadingEffect.of({ lineFrom: line.from, level })
+  });
+};
+
+/**
+ * Set the text alignment on the line containing pos.
+ * Uses Decoration.line() so the style persists through CodeMirror re-renders.
+ *
+ * @param {number} pos - Any character position on the target line.
+ * @param {string} align - 'left', 'center', or 'right'.
+ */
+EditorCodeMirror.prototype.setAlignOnLine = function(pos, align) {
+  const view = this.editorView_;
+  if (!view) return;
+  const line = view.state.doc.lineAt(pos);
+  view.dispatch({
+    effects: EditorCodeMirror.setAlignEffect.of({ lineFrom: line.from, align: align })
   });
 };
 

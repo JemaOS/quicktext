@@ -981,11 +981,6 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   border-color: #7376db;
 }
 
-/* Font family select — fixed compact width */
-#font-family-select.toolbar-select {
-  width: 100px;
-}
-
 /* Heading select — slightly wider for longer labels */
 #heading-select.toolbar-select {
   width: 110px;
