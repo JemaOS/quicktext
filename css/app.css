@@ -639,12 +639,23 @@ header.search-active .search-navigation-button.has-results {
   overflow: hidden;
   padding: 0;
   width: 30px;
-  color: var(--ta-accent-color);
+  min-width: 30px;
+  color: var(--ta-ui-text-color);
+  background: transparent;
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  -webkit-transition: opacity 200ms;
+  flex-shrink: 0;
 }
 
 .pwa-install-button:hover {
-  color: var(--ta-highlight-color);
+  opacity: 1;
+}
+
+.pwa-install-button.visible {
+  display: inline-flex !important;
 }
 
 #title-filename[contenteditable="true"] {
