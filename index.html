@@ -399,9 +399,6 @@
         const btn = getInstallBtn();
         if (!btn) return;
 
-        // Hide by default
-        hideInstallButton();
-
         // Add click handler
         btn.addEventListener('click', function(e) {
           e.preventDefault();
@@ -416,13 +413,11 @@
           return;
         }
 
-        // Show button after a short delay if criteria are met
-        // This handles cases where beforeinstallprompt doesn't fire immediately
-        setTimeout(function() {
-          if (!isAppInstalled() && deferredPrompt) {
-            showInstallButton();
-          }
-        }, 1000);
+        // Always show the install button if not installed
+        // On Chromium OS R132+, beforeinstallprompt may not fire reliably
+        // So we show the button and let the click handler fall back to manual instructions
+        showInstallButton();
+        console.log('[PWA] Install button displayed');
       });
 
       // Register service worker

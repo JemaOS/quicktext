@@ -4,7 +4,7 @@
 // Service Worker for QuickText PWA
 // Provides offline functionality and caching
 
-const CACHE_NAME = 'quicktext-v20';
+const CACHE_NAME = 'quicktext-v21';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -32,7 +32,9 @@ const ASSETS_TO_CACHE = [
   '/icon/64x64.png',
   '/icon/96x96.png',
   '/icon/128x128.png',
+  '/icon/192x192.png',
   '/icon/256x256.png',
+  '/icon/512x512.png',
   '/third_party/jquery/jquery-1.8.3.min.js',
   '/third_party/material-components-web/material-components-web.min.css',
   '/third_party/material-components-web/material-components-web.min.js',
