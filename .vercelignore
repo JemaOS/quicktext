@@ -4,7 +4,6 @@ build.py
 LICENSE.md
 package.json
 package-lock.json
-vercel.json
 .env.local
 .vercel
 
@@ -37,5 +36,4 @@ third_party/codemirror.next/package.json
 third_party/codemirror.next/package-lock.json
 third_party/codemirror.next/rollup.config.js
 README.md
-manifest.json
 _locales
