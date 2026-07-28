@@ -121,6 +121,18 @@ body[theme="dark"] {
   -webkit-transition: background-color 200ms;
 }
 
+/* While the app initializes, disable all transitions: applying the theme
+   attributes and the initial sidebar width would otherwise animate over
+   the first paint (the window chrome cross-fades and slides in, looking
+   like two superimposed window frames). The class is removed once the app
+   is ready (js/app.js onSettingsReady_). */
+html.qt-loading *,
+html.qt-loading *::before,
+html.qt-loading *::after {
+  -webkit-transition: none !important;
+  transition: none !important;
+}
+
 /* Prevent white flash before theme JS runs: match system color scheme immediately */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme-init="light"]) body:not([theme="light"]) {

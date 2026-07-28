@@ -78,6 +78,10 @@ TextApp.prototype.onSettingsReady_ = function() {
 
   this.initEditor_();
 
+  // The app chrome is fully initialized (theme applied, sidebar sized,
+  // editor created): re-enable CSS transitions for user interactions.
+  document.documentElement.classList.remove('qt-loading');
+
   this.windowController_.setAlwaysOnTop(this.settings_.get('alwaysontop'));
 
   // Setup format toolbar

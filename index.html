@@ -26,14 +26,34 @@
         var saved = localStorage.getItem('quicktext_theme_hint');
         var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme-init', theme);
-        document.addEventListener('DOMContentLoaded', function() {
-          document.body.setAttribute('theme', theme);
+        // Freeze all CSS transitions until the app is fully initialized:
+        // the forced 200ms background-color transition on `*` otherwise
+        // cross-fades the window chrome over the first paint, and the
+        // sidebar slides open, looking like two overlapping window frames.
+        document.documentElement.classList.add('qt-loading');
+        // Applied to <body> by the tiny script right after the <body> tag,
+        // so the very first paint is already themed.
+        window.__qtInitTheme = theme;
+        // Safety net: never leave transitions disabled if app init fails.
+        window.addEventListener('load', function() {
+          setTimeout(function() {
+            document.documentElement.classList.remove('qt-loading');
+          }, 1500);
         });
       } catch(e) {}
     })();
   </script>
 </head>
 <body>
+  <script>
+    // Set the theme before the first paint of the app content (the head
+    // inline script computed it into window.__qtInitTheme).
+    try {
+      if (window.__qtInitTheme) {
+        document.body.setAttribute('theme', window.__qtInitTheme);
+      }
+    } catch(e) {}
+  </script>
   <div id="window-container">
     <div id="sidebar">
       <div id="sidebar-resizer"></div>
