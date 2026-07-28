@@ -223,23 +223,33 @@ EditorCodeMirror.initDecorationSystem_ = function() {
           });
         } else if (effect.is(EditorCodeMirror.removeStyleEffect)) {
           const { from, to, cssProperty } = effect.value;
-          // Collect decorations that need to be modified (strip one CSS property)
+          const needle = cssProperty.toLowerCase() + ':';
+          // Collect replacement decorations (the property is stripped only
+          // inside [from, to]; the parts of a decoration outside that range
+          // are preserved as-is).
           const toAdd = [];
           decorations = decorations.update({
             filter: (dFrom, dTo, deco) => {
               // Keep decoration if it doesn't overlap the range
               if (dTo <= from || dFrom >= to) return true;
-              const style = deco.spec?.attributes?.style || '';
-              if (!style.includes(cssProperty)) return true; // doesn't have the property, keep
+              const style = (deco.spec?.attributes?.style || '').toLowerCase();
+              if (!style.includes(needle)) return true; // doesn't have the property, keep
               // Strip the specific CSS property from the style string
-              const newStyle = style
+              const newStyle = (deco.spec?.attributes?.style || '')
                 .split(';')
                 .map(s => s.trim())
-                .filter(s => s && !s.toLowerCase().startsWith(cssProperty.toLowerCase()))
+                .filter(s => s && !s.toLowerCase().startsWith(needle))
                 .join('; ');
+              // Preserve the parts of the decoration outside [from, to].
+              if (dFrom < from) toAdd.push(deco.range(dFrom, from));
+              if (dTo > to) toAdd.push(deco.range(to, dTo));
               if (newStyle) {
-                // Re-add with remaining properties
-                toAdd.push(Decoration.mark({ attributes: { style: newStyle } }).range(dFrom, dTo));
+                // Re-add the remaining properties on the overlap only.
+                const left = Math.max(dFrom, from);
+                const right = Math.min(dTo, to);
+                if (left < right) {
+                  toAdd.push(Decoration.mark({ attributes: { style: newStyle } }).range(left, right));
+                }
               }
               return false; // remove original
             },
@@ -734,14 +744,23 @@ EditorCodeMirror.prototype.applyStyleToRange = function(from, to, styleObj) {
     .join('; ');
   
   if (!cssString) return;
-  
-  view.dispatch({
-    effects: EditorCodeMirror.addStyleEffect.of({ from, to, style: cssString })
-  });
+
+  // Remove existing occurrences of the same properties in this range first:
+  // repeated applications must never stack duplicate decorations (stacked
+  // marks made the bold/italic toggle unable to remove a style).
+  const effects = [];
+  for (const prop of Object.keys(styleObj)) {
+    effects.push(EditorCodeMirror.removeStyleEffect.of({ from, to, cssProperty: prop }));
+  }
+  effects.push(EditorCodeMirror.addStyleEffect.of({ from, to, style: cssString }));
+  view.dispatch({ effects });
 };
 
 /**
- * Check if a CSS property is applied to any decoration in the given range.
+ * Check if a CSS property is applied to any decoration OVERLAPPING the given
+ * range. NOTE: RangeSet.between() only iterates ranges STARTING inside the
+ * interval, so a decoration starting before `from` would be missed; iterate
+ * the whole set (it is tiny) and test overlap explicitly.
  * @param {number} from
  * @param {number} to
  * @param {string} cssProperty - e.g. 'font-weight', 'font-style'
@@ -750,14 +769,16 @@ EditorCodeMirror.prototype.applyStyleToRange = function(from, to, styleObj) {
 EditorCodeMirror.prototype.hasStyleInRange = function(from, to, cssProperty) {
   const view = this.editorView_;
   if (!view) return false;
-  
+
   const decorations = view.state.field(EditorCodeMirror.styleDecorationField, false);
   if (!decorations) return false;
-  
+
+  const needle = cssProperty.toLowerCase() + ':';
   let found = false;
-  decorations.between(from, to, (dFrom, dTo, deco) => {
-    const style = deco.spec?.attributes?.style || '';
-    if (style.includes(cssProperty)) {
+  decorations.between(0, view.state.doc.length, (dFrom, dTo, deco) => {
+    if (dTo <= from || dFrom >= to) return; // no overlap
+    const style = (deco.spec?.attributes?.style || '').toLowerCase();
+    if (style.includes(needle)) {
       found = true;
       return false; // stop iteration
     }
