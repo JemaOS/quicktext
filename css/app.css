@@ -133,6 +133,15 @@ html.qt-loading *::after {
   transition: none !important;
 }
 
+/* Material Icons work via ligatures: the button text is the icon name
+   (content_cut, format_bold…). Hide that text while the icon font is
+   loading so it never flashes as plain words on first paint. The
+   icons-ready class is added by the inline script once the font is
+   loaded (with a 3s safety timeout). */
+html:not(.icons-ready) .material-icons {
+  color: transparent;
+}
+
 /* Prevent white flash before theme JS runs: match system color scheme immediately */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme-init="light"]) body:not([theme="light"]) {
@@ -763,25 +772,15 @@ input[type="color"]::-webkit-color-chooser {
 }
 
 /* The app ships its own window controls from its Chrome Apps era. They
-   are only useful inside an installed PWA window (whose system title bar
-   has no minimize/maximize); in a normal browser tab they duplicate the
-   browser's own window buttons and waste header space. Hidden by default
-   so they never flash in tab mode; restored only for installed-PWA
-   display modes. */
+   are hidden in every context: in a browser tab they duplicate the
+   browser's own window buttons, and in an installed PWA window the system
+   title bar already provides minimize/maximize/close while the shim's
+   min/max actions are no-ops anyway. Keeping them hidden also frees
+   header space on narrow windows. */
 #window-minimize,
 #window-maximize,
 #window-close {
   display: none;
-}
-
-@media (display-mode: standalone),
-       (display-mode: minimal-ui),
-       (display-mode: fullscreen) {
-  #window-minimize,
-  #window-maximize,
-  #window-close {
-    display: inline-flex;
-  }
 }
 
 #window-minimize {

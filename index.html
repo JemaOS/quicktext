@@ -40,6 +40,18 @@
             document.documentElement.classList.remove('qt-loading');
           }, 1500);
         });
+        // Hide Material Icons ligature text until the icon font is ready:
+        // with font-display:swap the raw names (content_cut, format_bold…)
+        // flash as plain text during the first paint.
+        var showIcons = function() {
+          document.documentElement.classList.add('icons-ready');
+        };
+        if (document.fonts && document.fonts.load) {
+          document.fonts.load('24px "Material Icons"').then(showIcons, showIcons);
+          setTimeout(showIcons, 3000); // never leave icons invisible
+        } else {
+          showIcons();
+        }
       } catch(e) {}
     })();
   </script>
@@ -302,7 +314,7 @@
       <div id="status-bar">
         <span class="status-item" id="status-position">Ln 1, Col 1</span>
         <span class="status-sep"></span>
-        <span class="status-item" id="status-chars">0 caractère</span>
+        <span class="status-item" id="status-chars">0 caractères</span>
         <span class="status-spacer"></span>
         <span class="status-copyright">
           Développé par <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> © 2026 • Open Source &amp; Libre
