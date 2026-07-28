@@ -95,7 +95,7 @@ Tab.prototype.getContent_ = function() {
   return this.session_.doc.toString().split('\n').join(this.lineEndings_);
 };
 
-Tab.prototype.save = function(opt_callbackDone) {
+Tab.prototype.save = function(opt_callbackDone, opt_errorCallback) {
   util.writeFile(
     this.entry_, this.getContent_(),
     function() {
@@ -104,7 +104,7 @@ Tab.prototype.save = function(opt_callbackDone) {
       if (opt_callbackDone)
         opt_callbackDone();
     }.bind(this),
-    this.reportWriteError_.bind(this));
+    opt_errorCallback || this.reportWriteError_.bind(this));
 };
 
 Tab.prototype.reportWriteError_ = function(e) {
@@ -231,6 +231,7 @@ Tabs.prototype.newTab = function(opt_content, opt_entry, opt_id) {
         if (opt_entry.createWritable) {
           opt_entry.isPWAFile = true;
           existingTab.setEntry(opt_entry);
+          this.reloadTabContentFromEntry_(existingTab);
         }
         this.showTab(existingTab.getId());
         return;
@@ -446,7 +447,7 @@ Tabs.prototype.promptSave_ = function(tab, callbackShowDialog) {
  * @param {?Tab=} opt_tab Optional tab to save.
  * @param {function()=} opt_callback
  */
-Tabs.prototype.save = function(opt_tab, opt_callback) {
+Tabs.prototype.save = function(opt_tab, opt_callback, opt_errorCallback) {
   let tab = opt_tab || this.currentTab_;
 
   // Update the tab's editorState if it's the current tab.
@@ -455,7 +456,7 @@ Tabs.prototype.save = function(opt_tab, opt_callback) {
   }
 
   if (tab.getEntry()) {
-    tab.save(opt_callback);
+    tab.save(opt_callback, opt_errorCallback);
   } else {
     this.saveAs(tab, opt_callback);
   }
@@ -562,6 +563,7 @@ Tabs.prototype.openPWAFileEntry = function(entry) {
       // Update the tab's entry with the new handle (fresh permissions)
       if (entry.createWritable) {
         existingTab.setEntry(entry);
+        this.reloadTabContentFromEntry_(existingTab);
       }
       this.showTab(existingTab.getId());
       return;
@@ -607,6 +609,37 @@ Tabs.prototype.openPWAFileEntry = function(entry) {
     entry.isPWAFile = true;
     this.newTab('', entry);
   }
+};
+
+/**
+ * Reload a tab's content from its file entry (used when a file is re-opened
+ * with a fresh handle). Keeps the editor buffer in sync with the on-disk
+ * content so a later save can't silently overwrite newer changes.
+ * @param {!Tab} tab
+ */
+Tabs.prototype.reloadTabContentFromEntry_ = function(tab) {
+  const entry = tab.getEntry();
+  if (!entry || !entry.getFile) return;
+  // Never wipe local unsaved edits: reloading only makes sense for a tab
+  // whose buffer matches the last saved state.
+  if (!tab.isSaved()) return;
+  entry.getFile().then(function(file) {
+    return file.text();
+  }).then(function(content) {
+    if (tab.session_ && tab.session_.doc.toString() !== content) {
+      const session = this.editor_.newState(content);
+      tab.setSession(session);
+      tab.lineEndings_ = util.guessLineEndings(content);
+      if (tab === this.currentTab_) {
+        this.editor_.setSession(session, tab.getExtension());
+      }
+    }
+    tab.saved_ = true;
+    $.event.trigger('tabsave', tab);
+    this.saveAllTabsToLocalStorage_();
+  }.bind(this)).catch(function(err) {
+    console.warn('Could not reload file content:', err);
+  });
 };
 
 /**
@@ -681,12 +714,18 @@ Tabs.prototype.saveEntry_ = function(tab, entry, opt_callback) {
 Tabs.prototype.onDocChanged_ = function() {
   if (!this.currentTab_) return;
   this.currentTab_.changed();
-  
+
   // Auto-save for PWA files after a delay
   this.scheduleAutoSave_();
-  
-  // Save all tabs to localStorage for session persistence (unsaved tabs included)
-  this.saveAllTabsToLocalStorage_();
+
+  // Save all tabs to localStorage for session persistence (unsaved tabs
+  // included), debounced: stringifying every tab on each keystroke janks
+  // typing on large documents.
+  if (this.persistTabsTimer_) {
+    clearTimeout(this.persistTabsTimer_);
+  }
+  this.persistTabsTimer_ = setTimeout(
+      this.saveAllTabsToLocalStorage_.bind(this), 500);
 }
 
 /**
@@ -738,7 +777,9 @@ Tabs.prototype.scheduleAutoSave_ = function() {
   this.autoSaveTimer_ = setTimeout(function() {
     if (tab && tab.getEntry() && !tab.isSaved()) {
       console.log('Auto-saving file:', tab.getEntry().name);
-      self.save(tab);
+      self.save(tab, null, function(err) {
+        console.warn('Auto-save failed (tab kept unsaved):', err);
+      });
     }
   }, 2000);
 }

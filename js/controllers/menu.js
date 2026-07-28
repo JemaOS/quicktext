@@ -202,7 +202,9 @@ MenuController.prototype.openShortcuts_ = function() {
     "Ctrl+S : Enregistrer",
     "Ctrl+Maj+S : Enregistrer sous",
     "Ctrl+F : Rechercher",
-    "Ctrl+H : Remplacer",
+    "Ctrl+Tab : Onglet suivant",
+    "Ctrl+Maj+Tab : Onglet précédent",
+    "Ctrl+E : Barre latérale",
     "Ctrl+W : Fermer l'onglet"
   );
   this.tabs_.dialogController_.resetButtons();

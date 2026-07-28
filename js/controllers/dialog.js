@@ -55,6 +55,8 @@ DialogController.prototype.reenableEverything_ = function() {
     this.disabledElements_[i]['element'].tabIndex =
         this.disabledElements_[i]['index'];
   }
+  // Clear the list: entries accumulate across successive dialogs otherwise.
+  this.disabledElements_ = [];
   this.editor_.enable();
 };
 

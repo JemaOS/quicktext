@@ -335,37 +335,10 @@
             console.log('Mock background: onWindowReady');
             // Hide custom window controls in PWA
             app.setHasChromeFrame(true);
-            
-            // Check if there are files to open from Launch Queue
-            const launchFilesStr = sessionStorage.getItem('quicktext_launch_files');
-            const newFileRequested = sessionStorage.getItem('quicktext_new_file');
-            
-            if (newFileRequested) {
-              // User requested new file - clear saved tabs and create empty tab
-              sessionStorage.removeItem('quicktext_new_file');
-              app.openTabs([]);
-              setTimeout(() => {
-                if (app.tabs_ && app.tabs_.newTab) {
-                  app.tabs_.newTab();
-                }
-              }, 100);
-              return;
-            }
-            
-            if (launchFilesStr) {
-              try {
-                const files = JSON.parse(launchFilesStr);
-                sessionStorage.removeItem('quicktext_launch_files');
-                app.openTabs([]);
-                setTimeout(() => {
-                  files.forEach(f => app.tabs_.openFileEntry(f.entry));
-                }, 100);
-              } catch (e) {
-                app.openTabs([]);
-              }
-              return;
-            }
-            
+
+            // Launch files are delivered by PWACompat via the
+            // 'pwa-launch-files' document event (see app.js).
+
             // Restore all tabs from localStorage (including unsaved ones)
             console.log('Attempting to restore all tabs...');
             let savedTabsStr = localStorage.getItem('quicktext_open_tabs');
@@ -533,32 +506,11 @@
     runtime: {
       onLaunched: {
         addListener: function(callback) {
-          // Handle launch files via Launch Queue API
-          if ('launchQueue' in window && 'LaunchParams' in window) {
-            window.launchQueue.setConsumer(launchParams => {
-              console.log('Launch params received:', launchParams);
-              
-              if (launchParams.files && launchParams.files.length > 0) {
-                // User opened existing files - store them for the app
-                const files = [];
-                Promise.all(launchParams.files.map(async (handle) => {
-                  const file = await handle.getFile();
-                  return {
-                    name: file.name,
-                    entry: handle
-                  };
-                })).then(files => {
-                  sessionStorage.setItem('quicktext_launch_files', JSON.stringify(files));
-                  console.log('Files to open:', files);
-                });
-              } else {
-                // No files provided - this is a "New File" request!
-                // Store this in sessionStorage to signal new file
-                sessionStorage.setItem('quicktext_new_file', 'true');
-                console.log('New file requested via context menu');
-              }
-            });
-          }
+          // Launch files are handled by PWACompat.handleLaunchFiles()
+          // (pwa-compat.js), the app's single launchQueue consumer. Do NOT
+          // register another consumer here: a second setConsumer() call
+          // would replace it, and FileSystemHandle objects cannot survive a
+          // sessionStorage round-trip (they are not JSON-serializable).
         }
       }
     },

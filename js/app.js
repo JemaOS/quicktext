@@ -93,6 +93,9 @@ TextApp.prototype.onSettingsReady_ = function() {
   chrome.runtime.getBackgroundPage(function(bg) {
     bg.background.onWindowReady(this);
   }.bind(this));
+
+  // Open any files passed at launch that arrived before tabs_ existed.
+  processPendingLaunchFiles_();
 };
 
 /**
@@ -209,15 +212,36 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     6: { 'font-size': '0.9em',  'font-weight': 'bold',   'line-height': '1.3' },
   };
 
+  // Formatting (headings + mark decorations) is persisted PER DOCUMENT,
+  // keyed by the tab identity (file name or display name). Storing it in a
+  // single global slot applied one document's formatting to unrelated
+  // documents.
+  const formattingKey_ = () => {
+    const tab = this.tabs_ && this.tabs_.getCurrentTab();
+    if (!tab) return null;
+    const entry = tab.getEntry();
+    return (entry && entry.name) || tab.getName() || null;
+  };
+
+  const readFormattingStore_ = () => {
+    try {
+      return JSON.parse(localStorage.getItem('quicktext_formatting') || '{}');
+    } catch (e) {
+      return {};
+    }
+  };
+
   // Save all formatting (headings + mark decorations) to localStorage
   const saveFormatting = () => {
     if (!this.editor_) return;
-    // Save heading line map
-    const headings = this.editor_.getHeadingsByLineNumber();
-    localStorage.setItem('quicktext_headings', JSON.stringify(headings));
-    // Save mark (inline) decorations
-    const marks = this.editor_.getMarkDecorations();
-    localStorage.setItem('quicktext_marks', JSON.stringify(marks));
+    const key = formattingKey_();
+    if (!key) return;
+    const store = readFormattingStore_();
+    store[key] = {
+      headings: this.editor_.getHeadingsByLineNumber(),
+      marks: this.editor_.getMarkDecorations()
+    };
+    localStorage.setItem('quicktext_formatting', JSON.stringify(store));
   };
 
   // Restore all formatting from localStorage
@@ -227,24 +251,24 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     if (!view) return;
     const docLength = view.state.doc.length;
 
-    // Only restore if document has substantial content (>10 chars as sanity check)
+    // Only restore if the document has substantial content (>10 chars as sanity check)
     if (docLength < 10) return;
 
+    const key = formattingKey_();
+    if (!key) return;
+    const saved = readFormattingStore_()[key];
+    if (!saved) return;
+
     try {
-      const savedHeadings = localStorage.getItem('quicktext_headings');
-      if (savedHeadings) {
-        const map = JSON.parse(savedHeadings);
-        this.editor_.restoreHeadingsByLineNumber(map);
+      if (saved.headings) {
+        this.editor_.restoreHeadingsByLineNumber(saved.headings);
       }
     } catch (e) { /* ignore */ }
 
     // For mark decorations, also check that saved marks fit within current doc length
     try {
-      const savedMarks = localStorage.getItem('quicktext_marks');
-      if (savedMarks) {
-        const marks = JSON.parse(savedMarks);
-        // Filter marks that fit within current document length
-        const validMarks = marks.filter(m => m.from >= 0 && m.to <= docLength && m.from < m.to);
+      if (saved.marks) {
+        const validMarks = saved.marks.filter(m => m.from >= 0 && m.to <= docLength && m.from < m.to);
         if (validMarks.length > 0) {
           this.editor_.restoreMarkDecorations(validMarks);
         }
@@ -559,30 +583,40 @@ TextApp.prototype.onSettingsChanged_ = function(e, key, value) {
 const textApp = new TextApp();
 window.textApp = textApp; // Expose globally for PWA persistence
 
-// Handle PWA file launch (when files are opened via file handler)
+// Handle PWA file launch (when files are opened via file handler).
+// The launchQueue consumer can fire before the app is initialized, so files
+// are queued until tabs_ exists (processed in onSettingsReady_).
+let pendingLaunchFiles_ = [];
+
+function processPendingLaunchFiles_() {
+  if (!textApp.tabs_ || pendingLaunchFiles_.length === 0) return;
+  const files = pendingLaunchFiles_;
+  pendingLaunchFiles_ = [];
+  files.forEach(fileData => {
+    // Create a fake entry object to work with existing code
+    const fakeEntry = {
+      name: fileData.name,
+      content: fileData.content,
+      handle: fileData.handle,
+      isPWAFile: true
+    };
+    textApp.tabs_.openFileEntry(fakeEntry);
+  });
+}
+
 document.addEventListener('pwa-launch-files', function(e) {
   const files = e.detail;
-  if (files && files.length > 0 && textApp.tabs_) {
-    // Open each file passed via file handler
-    files.forEach(fileData => {
-      // Create a fake entry object to work with existing code
-      const fakeEntry = {
-        name: fileData.name,
-        content: fileData.content,
-        handle: fileData.handle,
-        isPWAFile: true
-      };
-      textApp.tabs_.openFileEntry(fakeEntry);
-    });
+  if (files && files.length > 0) {
+    pendingLaunchFiles_ = pendingLaunchFiles_.concat(files);
+    processPendingLaunchFiles_();
   }
 });
 
-// Handle PWA new-file launch (when user creates new file via context menu)
+// Handle PWA new-file launch: only create a tab when nothing is open (the
+// normal startup flow already opens/restores tabs by itself).
 document.addEventListener('pwa-new-file', function(e) {
-  if (textApp.tabs_) {
-    // Create a new empty tab
+  if (textApp.tabs_ && !textApp.tabs_.hasOpenTab()) {
     textApp.tabs_.newTab();
-    // Focus the window
     if (textApp.windowController_) {
       textApp.windowController_.focus_();
     }

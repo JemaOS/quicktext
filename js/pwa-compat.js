@@ -93,19 +93,17 @@ const PWACompat = (function() {
     },
     
     /**
-     * Retain entry for session persistence
+     * Retain entry for session persistence.
+     * FileSystemHandle objects cannot be JSON-serialized (localStorage):
+     * delegate to the IndexedDB-backed shim and use the file name as id.
      */
     retainEntry: function(entry, callback) {
       if (this.isPWA() && entry.handle) {
-        const id = 'file_' + Date.now();
-        // Store handle in localStorage for persistence
-        try {
-          const stored = JSON.parse(localStorage.getItem('quicktext_retained') || '[]');
-          stored.push({ id: id, handle: entry.handle });
-          localStorage.setItem('quicktext_retained', JSON.stringify(stored));
-          callback(id);
-        } catch (err) {
-          console.error('Error retaining entry:', err);
+        const handle = entry.handle;
+        if (chrome.fileSystem && chrome.fileSystem.retainPWAEntry) {
+          chrome.fileSystem.retainPWAEntry(handle);
+          callback('retained_' + (handle.name || Date.now()));
+        } else {
           callback(null);
         }
       } else {
@@ -156,28 +154,32 @@ const PWACompat = (function() {
           file.text().then(content => {
             callback(content);
           });
+        }).catch(err => {
+          console.error('Read error:', err);
+          callback(null);
         });
       } else {
-        entry.file(callback);
+        fileHandle.file(callback);
       }
     },
     
     /**
-     * Write file content (PWA)
+     * Write file content (PWA). The callback only fires once the writable
+     * stream is closed (the write is durably complete).
      */
     writeFile: function(fileHandle, content, callback, errorCallback) {
       if (this.isPWA()) {
         fileHandle.createWritable().then(writable => {
-          writable.write(content);
-          writable.close();
-          callback();
+          return writable.write(content).then(() => writable.close());
+        }).then(() => {
+          if (callback) callback();
         }).catch(err => {
           console.error('Write error:', err);
           if (errorCallback) errorCallback(err);
         });
       } else {
         // Chrome App file writing
-        entry.createWriter(function(writer) {
+        fileHandle.createWriter(function(writer) {
           writer.onwrite = callback;
           writer.onerror = errorCallback;
           const blob = new Blob([content], {type: 'text/plain'});
@@ -187,12 +189,16 @@ const PWACompat = (function() {
     },
     
     /**
-     * Handle files passed via launchParams (PWA file handling)
+     * Handle files passed via launchParams (PWA file handling).
+     * NOTE: this is the ONLY launchQueue consumer of the app (the
+     * chrome.app.runtime.onLaunched shim in chrome-shim.js must not register
+     * one: a second setConsumer() call would replace this one and its
+     * sessionStorage-based flow is broken because FileSystemHandle objects
+     * are not JSON-serializable).
      */
     handleLaunchFiles: async function() {
       if ('launchQueue' in window && 'LaunchParams' in window) {
         window.launchQueue.setConsumer(async (launchParams) => {
-          // Handle new-file launch type (when user creates new file via context menu)
           if (launchParams.files && launchParams.files.length > 0) {
             const files = [];
             for (const handle of launchParams.files) {
@@ -203,16 +209,13 @@ const PWACompat = (function() {
                 handle: handle
               });
             }
-            
+
             // Trigger custom event with files
             const event = new CustomEvent('pwa-launch-files', { detail: files });
             document.dispatchEvent(event);
-          } else {
-            // App was launched but no files passed - this could be a new-file request
-            // Dispatch event to create a new empty tab
-            const event = new CustomEvent('pwa-new-file', { detail: { type: 'new-file' } });
-            document.dispatchEvent(event);
           }
+          // A plain launch (no files) is NOT a new-file request: the app
+          // already restores previous tabs or opens an empty one by itself.
         });
       }
     }

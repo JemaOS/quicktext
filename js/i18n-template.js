@@ -109,4 +109,6 @@ const i18nTemplate = (function() {
   };
 }());
 
-$(document).ready(i18nTemplate.process(document));
+$(document).ready(function() {
+  i18nTemplate.process(document);
+});
