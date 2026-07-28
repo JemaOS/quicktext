@@ -762,6 +762,28 @@ input[type="color"]::-webkit-color-chooser {
   font-size: 20px;
 }
 
+/* The app ships its own window controls from its Chrome Apps era. They
+   are only useful inside an installed PWA window (whose system title bar
+   has no minimize/maximize); in a normal browser tab they duplicate the
+   browser's own window buttons and waste header space. Hidden by default
+   so they never flash in tab mode; restored only for installed-PWA
+   display modes. */
+#window-minimize,
+#window-maximize,
+#window-close {
+  display: none;
+}
+
+@media (display-mode: standalone),
+       (display-mode: minimal-ui),
+       (display-mode: fullscreen) {
+  #window-minimize,
+  #window-maximize,
+  #window-close {
+    display: inline-flex;
+  }
+}
+
 #window-minimize {
   /* Move the 'remove' icon down so it looks like a minimize icon */
   padding-top: 18px;
@@ -889,6 +911,30 @@ header.search-active ~ #editor div.cm-editor .cm-searchMatch {
 }
 
 /* Responsive Design */
+
+/* Narrow desktop windows: the centered file title is the first thing to
+   sacrifice so the toolbar and search keep usable widths. */
+@media (max-width: 1100px) {
+  #title-filename {
+    display: none;
+  }
+}
+
+/* Below 900px the format toolbar no longer fits comfortably next to the
+   search box; hide it (its actions remain available via hotkeys). */
+@media (max-width: 900px) {
+  .format-toolbar {
+    display: none !important;
+  }
+}
+
+/* Small windows: the search box yields the header to the title. */
+@media (max-width: 640px) {
+  .search-container {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .format-toolbar {
     display: none !important; /* Hide format toolbar on tablets and smaller */
