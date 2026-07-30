@@ -376,8 +376,37 @@
                   const tabsToRestore = savedTabs.slice(); // copy
                   const restoredCount = 0;
                   
+                  // Close same-named duplicate tabs, keeping the first one
+                  // (preferring tabs that still have a file entry).
+                  function deduplicateRestoredTabs() {
+                    if (!app.tabs_ || !app.tabs_.tabs_) return;
+                    const byName = {};
+                    app.tabs_.tabs_.slice().forEach(function(tab) {
+                      const e = tab.getEntry();
+                      const name = (e && e.name) || tab.getName();
+                      if (!name) return;
+                      const prev = byName[name];
+                      if (!prev) {
+                        byName[name] = tab;
+                      } else {
+                        // Keep the tab that has an entry; if both or neither
+                        // have one, keep the first.
+                        const keep = (!prev.getEntry() && tab.getEntry()) ? tab : prev;
+                        const drop = (keep === prev) ? tab : prev;
+                        byName[name] = keep;
+                        // Never discard unsaved edits: only auto-close a
+                        // duplicate that has no unsaved changes.
+                        if (drop.isSaved()) {
+                          console.log('Closing duplicate tab for', name);
+                          app.tabs_.closeTab_(drop);
+                        }
+                      }
+                    });
+                  }
+
                   function restoreNextTab(index) {
                     if (index >= tabsToRestore.length) {
+                      deduplicateRestoredTabs();
                       // All tabs restored - switch to the previously active tab
                       if (app.tabs_ && app.tabs_.tabs_.length > 0) {
                         // Remove the initial empty tab if it exists and we have restored tabs
@@ -397,7 +426,29 @@
                     }
                     
                     const tabData = tabsToRestore[index];
-                    
+
+                    // Dedup: a tab with the same name may already exist
+                    // (opened via launch, or restored earlier from a state
+                    // that already contained duplicates). Creating another
+                    // one would re-persist duplicate tabs forever.
+                    const restoreName = tabData.entryName || tabData.customName || tabData.name;
+                    if (restoreName && app.tabs_.findOpenTabByName_) {
+                      const dup = app.tabs_.findOpenTabByName_(restoreName);
+                      if (dup) {
+                        console.log('Restore dedup: tab already open for', restoreName);
+                        if (tabData.hasEntry && tabData.entryName && retainedByName[tabData.entryName]) {
+                          const h = retainedByName[tabData.entryName];
+                          h.isPWAFile = true;
+                          dup.setEntry(h);
+                          if (app.tabs_.reloadTabContentFromEntry_) {
+                            app.tabs_.reloadTabContentFromEntry_(dup);
+                          }
+                        }
+                        restoreNextTab(index + 1);
+                        return;
+                      }
+                    }
+
                     if (tabData.hasEntry && tabData.entryName && retainedByName[tabData.entryName]) {
                       // Restore tab with file entry
                       const handle = retainedByName[tabData.entryName];
