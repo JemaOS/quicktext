@@ -142,6 +142,13 @@ function Tabs(editor, dialogController, settings) {
   this.tabs_ = [];
   /** @type {Tab|null} Current selected tab, or initially null. */
   this.currentTab_ = null;
+  /**
+   * Files currently being opened asynchronously (name -> Promise<Tab>).
+   * Reading a file is async: without this, opening the same file twice in
+   * quick succession found no existing tab and no in-flight open either,
+   * so each attempt created its own tab (duplicate tabs of one file).
+   */
+  this.pendingFileOpens_ = new Map();
 
   $(document).bind('docchange', this.onDocChanged_.bind(this));
 }
@@ -192,6 +199,38 @@ Tabs.prototype.chooseEntries = function(params, callback, opt_oncancel) {
             opt_oncancel();
         }
       });
+};
+
+/**
+ * Find an already-open tab for a file name. Matches the entry name, or the
+ * tab display name for tabs that lost their entry (restored without the
+ * file handle).
+ * @param {string} name
+ * @return {Tab|null}
+ */
+Tabs.prototype.findOpenTabByName_ = function(name) {
+  for (let i = 0; i < this.tabs_.length; i++) {
+    const tab = this.tabs_[i];
+    const tabEntry = tab.getEntry();
+    if ((tabEntry && tabEntry.name === name) ||
+        (!tabEntry && tab.getName() === name)) {
+      return tab;
+    }
+  }
+  return null;
+};
+
+/**
+ * Close the initial empty tab once a real file tab exists next to it.
+ * @param {Tab} openedTab The tab that was just opened.
+ */
+Tabs.prototype.closeEmptyInitialTabIfAny_ = function(openedTab) {
+  if (this.tabs_.length === 2 &&
+      this.tabs_[0] !== openedTab &&
+      !this.tabs_[0].getEntry() &&
+      this.tabs_[0].isSaved()) {
+    this.close(this.tabs_[0].getId());
+  }
 };
 
 Tabs.prototype.getTabById = function(id) {
@@ -541,105 +580,75 @@ Tabs.prototype.openFileEntry = function(entry) {
  * @param {Object} entry - PWA file entry with handle
  */
 Tabs.prototype.openPWAFileEntry = function(entry) {
-  const self = this;
-  
-  // Unwrap: if entry is a wrapper object (e.g. from IndexedDB) with a .handle
-  // property that is the actual FileSystemFileHandle, use the handle instead.
-  // A real FileSystemFileHandle has createWritable and getFile methods.
+  // Unwrap: if entry is a wrapper object (e.g. from IndexedDB or the launch
+  // flow) with a .handle property that is the actual FileSystemFileHandle,
+  // use the handle instead.
   if (!entry.createWritable && !entry.getFile && entry.handle && entry.handle.createWritable) {
     entry = entry.handle;
   }
-  
-  entry.isPWAFile = true;
-  
-  // Check if already open by comparing entry name or tab display name
-  for (let i = 0; i < this.tabs_.length; i++) {
-    let existingTab = this.tabs_[i];
-    let existingEntry = existingTab.getEntry();
-    // Match by entry name (primary) or by tab display name (fallback for tabs that lost their entry)
-    let nameMatch = (existingEntry && existingEntry.name === entry.name) ||
-                    (!existingEntry && existingTab.getName() === entry.name);
-    if (nameMatch) {
-      // Update the tab's entry with the new handle (fresh permissions)
-      if (entry.createWritable) {
-        existingTab.setEntry(entry);
-        this.reloadTabContentFromEntry_(existingTab);
-      }
-      this.showTab(existingTab.getId());
-      return;
-    }
-  }
 
-  // If entry has content, use it directly
-  if (entry.content) {
-    this.newTab(entry.content, entry);
-    
-    // Close empty initial tab if exists
-    if (this.tabs_.length === 2 &&
-        !this.tabs_[0].getEntry() &&
-        this.tabs_[0].isSaved()) {
-      this.close(this.tabs_[0].getId());
+  entry.isPWAFile = true;
+
+  // 1) Already open: update the entry (fresh permissions) and focus it.
+  const existingTab = this.findOpenTabByName_(entry.name);
+  if (existingTab) {
+    if (entry.createWritable) {
+      existingTab.setEntry(entry);
+      this.reloadTabContentFromEntry_(existingTab);
     }
+    this.showTab(existingTab.getId());
     return;
   }
 
-  // Otherwise, read the file content
-  if (entry.getFile) {
-    entry.getFile().then(function(file) {
-      return file.text();
-    }).then(function(content) {
-      entry.content = content;
-      entry.isPWAFile = true;
-      self.newTab(content, entry);
-      
-      // Close empty initial tab if exists
-      if (self.tabs_.length === 2 &&
-          !self.tabs_[0].getEntry() &&
-          self.tabs_[0].isSaved()) {
-        self.close(self.tabs_[0].getId());
+  // 2) An async open for this exact file is already in flight: do NOT open
+  // a second tab; when it lands, refresh its entry and focus it.
+  const pending = this.pendingFileOpens_.get(entry.name);
+  if (pending) {
+    pending.then((tab) => {
+      if (tab && entry.createWritable) {
+        tab.setEntry(entry);
       }
-    }).catch(function(err) {
-      console.error('Error reading file:', err);
-      // Open with empty content if read fails
-      entry.isPWAFile = true;
-      self.newTab('', entry);
+      if (tab) {
+        this.showTab(tab.getId());
+      }
     });
-  } else {
-    // Fallback
-    entry.isPWAFile = true;
-    this.newTab('', entry);
+    return;
   }
-};
 
-/**
- * Reload a tab's content from its file entry (used when a file is re-opened
- * with a fresh handle). Keeps the editor buffer in sync with the on-disk
- * content so a later save can't silently overwrite newer changes.
- * @param {!Tab} tab
- */
-Tabs.prototype.reloadTabContentFromEntry_ = function(tab) {
-  const entry = tab.getEntry();
-  if (!entry || !entry.getFile) return;
-  // Never wipe local unsaved edits: reloading only makes sense for a tab
-  // whose buffer matches the last saved state.
-  if (!tab.isSaved()) return;
-  entry.getFile().then(function(file) {
-    return file.text();
-  }).then(function(content) {
-    if (tab.session_ && tab.session_.doc.toString() !== content) {
-      const session = this.editor_.newState(content);
-      tab.setSession(session);
-      tab.lineEndings_ = util.guessLineEndings(content);
-      if (tab === this.currentTab_) {
-        this.editor_.setSession(session, tab.getExtension());
-      }
-    }
-    tab.saved_ = true;
-    $.event.trigger('tabsave', tab);
-    this.saveAllTabsToLocalStorage_();
-  }.bind(this)).catch(function(err) {
-    console.warn('Could not reload file content:', err);
-  });
+  // 3) Content already available (launch flow): open synchronously.
+  if (entry.content) {
+    const tab = this.newTab(entry.content, entry);
+    this.closeEmptyInitialTabIfAny_(tab);
+    return;
+  }
+
+  // 4) Read the file, then open it. The open is registered in
+  // pendingFileOpens_ so any concurrent open of the same file (double
+  // click, repeated launches) attaches to it instead of duplicating a tab.
+  if (entry.getFile) {
+    const openPromise = entry.getFile()
+      .then(function(file) {
+        return file.text();
+      })
+      .then(function(content) {
+        entry.content = content;
+        const tab = this.newTab(content, entry);
+        this.closeEmptyInitialTabIfAny_(tab);
+        return tab;
+      }.bind(this))
+      .catch(function(err) {
+        console.error('Error reading file:', err);
+        return this.newTab('', entry);
+      }.bind(this))
+      .finally(function() {
+        this.pendingFileOpens_.delete(entry.name);
+      }.bind(this));
+    this.pendingFileOpens_.set(entry.name, openPromise);
+    return;
+  }
+
+  // Fallback: open empty.
+  this.newTab('', entry);
 };
 
 /**
