@@ -44,6 +44,32 @@ Tab.prototype.setName = function(name) {
 };
 
 /**
+ * Rename the actual file on disk to match the tab name. Uses
+ * FileSystemHandle.move() (Chrome 121+). On success the display name falls
+ * back to the entry name so tab and file stay in sync. Returns true if the
+ * file was actually renamed.
+ * @param {string} newName
+ * @return {Promise<boolean>}
+ */
+Tab.prototype.renameFile = async function(newName) {
+  const entry = this.getEntry();
+  if (!entry || !entry.isPWAFile || typeof entry.move !== 'function') {
+    return false;
+  }
+  try {
+    await entry.move(newName);
+    this.customName_ = null;
+    this.saved_ = true;
+    $.event.trigger('tabrenamed', this);
+    $.event.trigger('tabsave', this);
+    return true;
+  } catch (err) {
+    console.warn('Could not rename file on disk:', err);
+    return false;
+  }
+};
+
+/**
  * @return {string?} Filename extension or null.
  */
 Tab.prototype.getExtension = function() {

@@ -278,7 +278,13 @@ MenuController.prototype.renameTab_ = function(id, filenameElement) {
     filenameElement.removeEventListener('input', enforceMaxLength);
     
     if (newName && newName !== tab.getName()) {
-      tab.setName(newName);
+      // Rename the actual file on disk when the tab is backed by one;
+      // otherwise (or on failure) fall back to a display-only rename.
+      tab.renameFile(newName).then(function(renamed) {
+        if (!renamed) {
+          tab.setName(newName);
+        }
+      });
     } else {
       filenameElement.textContent = tab.getName();
     }
