@@ -212,6 +212,28 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     6: { 'font-size': '0.9em',  'font-weight': 'bold',   'line-height': '1.3' },
   };
 
+  // Pending formats (Word-style): when no text is selected, the format
+  // buttons set styles that apply only to the text typed next at the cursor.
+  const pendingFormats_ = { bold: false, italic: false, heading: 0 };
+
+  const syncPendingStyles_ = () => {
+    if (!this.editor_) return;
+    const styles = [];
+    if (pendingFormats_.bold) styles.push({ 'font-weight': 'bold' });
+    if (pendingFormats_.italic) styles.push({ 'font-style': 'italic' });
+    if (pendingFormats_.heading > 0) styles.push(HEADING_MARK_STYLES[pendingFormats_.heading]);
+    this.editor_.setPendingStyles(styles);
+  };
+
+  $(document).bind('pendingclear', () => {
+    pendingFormats_.bold = false;
+    pendingFormats_.italic = false;
+    pendingFormats_.heading = 0;
+    if (this.editor_) this.editor_.setPendingStyles([]);
+    updateStyleButtons();
+    updateHeadingSelect();
+  });
+
   // Formatting (headings + mark decorations) is persisted PER DOCUMENT,
   // keyed by the tab identity (file name or display name). Storing it in a
   // single global slot applied one document's formatting to unrelated
@@ -286,7 +308,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   /**
    * Apply heading style:
    * - If text is selected → apply mark decoration to the selection only
-   * - If no selection (cursor) → apply line decoration to the whole line
+   * - If no selection (cursor) → set a pending heading applied to the text
+   *   typed next (Word-style)
    */
   const applyHeading = (level) => {
     const view = this.editor_?.editorView_;
@@ -309,9 +332,10 @@ TextApp.prototype.setupFormatToolbar_ = function() {
         this.editor_.applyStyleToRange(sel.from, sel.to, HEADING_MARK_STYLES[level]);
       }
     } else {
-      // No selection: apply line decoration to the whole cursor line
-      const pos = sel.head;
-      this.editor_.setHeadingOnLine(pos, level);
+      // No selection: set pending heading, applied to the text typed next
+      pendingFormats_.heading = level;
+      syncPendingStyles_();
+      updateHeadingSelect();
     }
 
     // Persist all formatting
@@ -324,6 +348,10 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     if (!headingSelect || !this.editor_) return;
     const view = this.editor_.editorView_;
     if (!view) return;
+    if (pendingFormats_.heading > 0) {
+      headingSelect.value = String(pendingFormats_.heading);
+      return;
+    }
     const sel = view.state.selection.main;
     // Always read from the line decoration (cursor line)
     const level = this.editor_.getHeadingOnLine(sel.head);
@@ -347,8 +375,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   }, 200);
 
   const updateStyleButtons = () => {
-    boldBtn.style.backgroundColor = isBold ? 'var(--ta-highlight-color)' : 'transparent';
-    italicBtn.style.backgroundColor = isItalic ? 'var(--ta-highlight-color)' : 'transparent';
+    boldBtn.style.backgroundColor = (isBold || pendingFormats_.bold) ? 'var(--ta-highlight-color)' : 'transparent';
+    italicBtn.style.backgroundColor = (isItalic || pendingFormats_.italic) ? 'var(--ta-highlight-color)' : 'transparent';
   };
 
   const applyFormat = () => {
@@ -421,6 +449,7 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   // via timed fallbacks for slow content loads.
   $(document).bind('docchange', () => {
     restoreFormattingForCurrentTab_();
+    saveFormatting();
   });
   setTimeout(restoreFormattingForCurrentTab_, 300);
   setTimeout(restoreFormattingForCurrentTab_, 600);
@@ -437,10 +466,10 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       }
       saveFormatting();
     } else {
-      // No selection - toggle global bold
-      isBold = !isBold;
-      localStorage.setItem('quicktext_text_bold', isBold);
-      applyFormat();
+      // No selection: toggle pending bold, applied to the text typed next
+      pendingFormats_.bold = !pendingFormats_.bold;
+      syncPendingStyles_();
+      updateStyleButtons();
     }
   });
 
@@ -455,10 +484,10 @@ TextApp.prototype.setupFormatToolbar_ = function() {
       }
       saveFormatting();
     } else {
-      // No selection - toggle global italic
-      isItalic = !isItalic;
-      localStorage.setItem('quicktext_text_italic', isItalic);
-      applyFormat();
+      // No selection: toggle pending italic, applied to the text typed next
+      pendingFormats_.italic = !pendingFormats_.italic;
+      syncPendingStyles_();
+      updateStyleButtons();
     }
   });
 

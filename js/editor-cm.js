@@ -43,6 +43,13 @@ function EditorCodeMirror(editorElement, settings) {
   /** @type {window.CodeMirror.state.Compartment} for setting light/dark mode. */
   this.themeCompartment_ = new CodeMirror.state.Compartment();
 
+  /**
+   * Pending format styles (Word-style): when set, they are applied as mark
+   * decorations to text inserted at the cursor. Empty when inactive.
+   * @type {!Array<!Object<string, string>>}
+   */
+  this.pendingStyles_ = [];
+
   const themeStyles = {
     "&": {
       backgroundColor: "var(--ta-background-color)",
@@ -523,6 +530,11 @@ EditorCodeMirror.prototype.newState = function(opt_content) {
  */
 EditorCodeMirror.prototype.setSession = function(editorState, fileExtension) {
   this.editorView_.setState(editorState);
+  // Drop pending formats when switching tabs
+  if (this.pendingStyles_ && this.pendingStyles_.length) {
+    this.pendingStyles_ = [];
+    $.event.trigger('pendingclear');
+  }
   // Apply all settings because settings only apply to the current state but we
   // want the settings to affect all the tabs.
   this.applyAllSettings();
@@ -663,13 +675,48 @@ EditorCodeMirror.prototype.setReplaceTabWithSpaces = function(useSpace) {
  */
 EditorCodeMirror.prototype.onViewUpdate = function(update) {
   if (update.docChanged) {
+    // Pending formats (set with an empty selection): apply them to text
+    // inserted at the cursor, Word-style.
+    if (this.pendingStyles_ && this.pendingStyles_.length) {
+      const inserts = [];
+      update.changes.iterChanges((fromA, toA, fromB, toB) => {
+        if (fromA === toA && toB > fromB) {
+          inserts.push({ from: fromB, to: toB });
+        }
+      });
+      for (const ins of inserts) {
+        for (const styleObj of this.pendingStyles_) {
+          this.applyStyleToRange(ins.from, ins.to, styleObj);
+        }
+      }
+    }
     $.event.trigger('docchange');
+  } else if (update.selectionSet && this.pendingStyles_ && this.pendingStyles_.length) {
+    // Cursor moved without typing: drop pending formats.
+    this.pendingStyles_ = [];
+    $.event.trigger('pendingclear');
   }
   // Track the last non-empty selection so toolbar can use it even after focus loss
   const sel = update.state.selection.main;
   if (!sel.empty) {
     this.lastSelection_ = { from: sel.from, to: sel.to };
   }
+};
+
+/**
+ * Set the pending format styles applied to text typed at the cursor
+ * while no selection exists. Pass an empty array to clear.
+ * @param {!Array<!Object<string, string>>} styleObjs
+ */
+EditorCodeMirror.prototype.setPendingStyles = function(styleObjs) {
+  this.pendingStyles_ = styleObjs ? styleObjs.slice() : [];
+};
+
+/**
+ * @return {!Array<!Object<string, string>>} Current pending format styles.
+ */
+EditorCodeMirror.prototype.getPendingStyles = function() {
+  return this.pendingStyles_ ? this.pendingStyles_.slice() : [];
 };
 
 /**
