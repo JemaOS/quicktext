@@ -304,7 +304,10 @@ EditorCodeMirror.initDecorationSystem_ = function() {
         const newMap = new Map();
         lineMap.forEach((level, oldFrom) => {
           const newFrom = tr.changes.mapPos(oldFrom, 1);
-          newMap.set(newFrom, level);
+          // Keep keys canonical: store the START of the line that now contains
+          // the mapped position, so exact lookups by line.from keep working
+          // after edits at the start of a heading line.
+          newMap.set(tr.state.doc.lineAt(newFrom).from, level);
         });
         lineMap = newMap;
       }
@@ -366,7 +369,9 @@ EditorCodeMirror.initDecorationSystem_ = function() {
         lineMap.forEach((align, oldFrom) => {
           try {
             const newFrom = tr.changes.mapPos(oldFrom, 1);
-            newMap.set(newFrom, align);
+            // Keep keys canonical: store the START of the line that now
+            // contains the mapped position (see heading field).
+            newMap.set(tr.state.doc.lineAt(newFrom).from, align);
           } catch(e) {
             // Position was deleted, skip
           }
