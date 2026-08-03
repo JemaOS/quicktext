@@ -379,35 +379,43 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   setTimeout(applyFormat, 100);
   setTimeout(applyFormat, 500);
 
-  // Restore formatting AFTER the tab content is fully loaded.
-  // chrome-shim restores tab content with a ~150ms delay, so we wait for
-  // the first docchange event (which fires when content is actually inserted).
-  let formattingRestoredOnce = false;
-  const restoreFormattingOnce = () => {
-    if (formattingRestoredOnce) return;
-    // Only restore if the document has content
+  // Restore formatting whenever a tab is shown, idempotent per document key
+  // per app session. The previous once-per-session restore was timing
+  // fragile (content still empty at 300/600ms, or the restore happened on
+  // the wrong tab), so formatting looked lost after close/reopen.
+  const restoredFormattingKeys_ = new Set();
+  const restoreFormattingForCurrentTab_ = () => {
     const view = this.editor_?.editorView_;
-    if (!view || view.state.doc.length === 0) return;
-    formattingRestoredOnce = true;
+    if (!view || view.state.doc.length < 10) return;
+    const key = formattingKey_();
+    if (!key || restoredFormattingKeys_.has(key)) return;
+    restoredFormattingKeys_.add(key);
     restoreFormatting();
   };
 
   $(document).bind('switchtab', () => {
     setTimeout(applyFormat, 50);
-    // Reset restore flag when switching tabs (each tab has its own formatting)
-    // but only restore once per session load
+    // showTab already installed the tab session before firing switchtab,
+    // so the document is available here.
+    setTimeout(restoreFormattingForCurrentTab_, 50);
   });
 
-  // Listen for the first document change after load — this is when content is restored
+  // Re-apply formatting after a content reload (reloadTabContentFromEntry_
+  // replaces the editor state with a fresh decoration-less newState).
+  $(document).bind('tabcontentreloaded', (e) => {
+    const key = formattingKey_();
+    if (key) restoredFormattingKeys_.delete(key);
+    setTimeout(restoreFormattingForCurrentTab_, 50);
+  });
+
+  // Also restore on the first document change after load (startup path) and
+  // via timed fallbacks for slow content loads.
   $(document).bind('docchange', () => {
-    if (!formattingRestoredOnce) {
-      restoreFormattingOnce();
-    }
+    restoreFormattingForCurrentTab_();
   });
-
-  // Also try after delays as fallback
-  setTimeout(restoreFormattingOnce, 300);
-  setTimeout(restoreFormattingOnce, 600);
+  setTimeout(restoreFormattingForCurrentTab_, 300);
+  setTimeout(restoreFormattingForCurrentTab_, 600);
+  setTimeout(restoreFormattingForCurrentTab_, 1200);
 
   boldBtn.addEventListener('click', () => {
     const sel = getActiveSelection();

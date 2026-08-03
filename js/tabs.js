@@ -321,6 +321,40 @@ Tabs.prototype.newTab = function(opt_content, opt_entry, opt_id) {
 };
 
 /**
+ * Reload a tab's content from its file entry (used when a file is re-opened
+ * with a fresh handle). Keeps the editor buffer in sync with the on-disk
+ * content so a later save can't silently overwrite newer changes.
+ * @param {!Tab} tab
+ */
+Tabs.prototype.reloadTabContentFromEntry_ = function(tab) {
+  const entry = tab.getEntry();
+  if (!entry || !entry.getFile) return;
+  // Never wipe local unsaved edits: reloading only makes sense for a tab
+  // whose buffer matches the last saved state.
+  if (!tab.isSaved()) return;
+  entry.getFile().then(function(file) {
+    return file.text();
+  }).then(function(content) {
+    if (tab.session_ && tab.session_.doc.toString() !== content) {
+      const session = this.editor_.newState(content);
+      tab.setSession(session);
+      tab.lineEndings_ = util.guessLineEndings(content);
+      if (tab === this.currentTab_) {
+        this.editor_.setSession(session, tab.getExtension());
+      }
+      // The fresh newState wiped the style decorations: let the app re-apply
+      // the persisted formatting for this document.
+      $.event.trigger('tabcontentreloaded', tab);
+    }
+    tab.saved_ = true;
+    $.event.trigger('tabsave', tab);
+    this.saveAllTabsToLocalStorage_();
+  }.bind(this)).catch(function(err) {
+    console.warn('Could not reload file content:', err);
+  });
+};
+
+/**
  * @param {number} oldIndex
  * @param {number} newIndex
  * Move a {Tab} from oldIndex to newIndex
