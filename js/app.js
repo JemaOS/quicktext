@@ -239,7 +239,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     const store = readFormattingStore_();
     store[key] = {
       headings: this.editor_.getHeadingsByLineNumber(),
-      marks: this.editor_.getMarkDecorations()
+      marks: this.editor_.getMarkDecorations(),
+      alignments: this.editor_.getAlignmentsByLineNumber()
     };
     localStorage.setItem('quicktext_formatting', JSON.stringify(store));
   };
@@ -272,6 +273,12 @@ TextApp.prototype.setupFormatToolbar_ = function() {
         if (validMarks.length > 0) {
           this.editor_.restoreMarkDecorations(validMarks);
         }
+      }
+    } catch (e) { /* ignore */ }
+
+    try {
+      if (saved.alignments) {
+        this.editor_.restoreAlignmentsByLineNumber(saved.alignments);
       }
     } catch (e) { /* ignore */ }
   };
@@ -472,9 +479,9 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     }
   };
 
-  alignLeftBtn.addEventListener('click', () => setAlign('left'));
-  alignCenterBtn.addEventListener('click', () => setAlign('center'));
-  alignRightBtn.addEventListener('click', () => setAlign('right'));
+  alignLeftBtn.addEventListener('click', () => { setAlign('left'); saveFormatting(); });
+  alignCenterBtn.addEventListener('click', () => { setAlign('center'); saveFormatting(); });
+  alignRightBtn.addEventListener('click', () => { setAlign('right'); saveFormatting(); });
   
   // Edit actions
   cutBtn.addEventListener('click', () => {

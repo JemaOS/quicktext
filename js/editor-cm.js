@@ -844,6 +844,47 @@ EditorCodeMirror.prototype.setAlignOnLine = function(pos, align) {
 };
 
 /**
+ * Get all line alignments as a plain object { lineNumber: 'center'|'right' }.
+ * 'left' is the default and is not stored.
+ * @return {Object}
+ */
+EditorCodeMirror.prototype.getAlignmentsByLineNumber = function() {
+  const view = this.editorView_;
+  if (!view) return {};
+  const fieldState = view.state.field(EditorCodeMirror.alignDecorationField, false);
+  if (!fieldState) return {};
+  const result = {};
+  fieldState.lineMap.forEach((align, from) => {
+    try {
+      const lineNum = view.state.doc.lineAt(from).number;
+      result[lineNum] = align;
+    } catch (e) { /* position out of range, skip */ }
+  });
+  return result;
+};
+
+/**
+ * Restore line alignments from a plain object { lineNumber: align }.
+ * @param {Object} alignmentsByLine
+ */
+EditorCodeMirror.prototype.restoreAlignmentsByLineNumber = function(alignmentsByLine) {
+  const view = this.editorView_;
+  if (!view) return;
+  const doc = view.state.doc;
+  const effects = [];
+  for (const [lineNumStr, align] of Object.entries(alignmentsByLine)) {
+    const lineNum = Number(lineNumStr);
+    if (lineNum >= 1 && lineNum <= doc.lines && align) {
+      const line = doc.line(lineNum);
+      effects.push(EditorCodeMirror.setAlignEffect.of({ lineFrom: line.from, align }));
+    }
+  }
+  if (effects.length > 0) {
+    view.dispatch({ effects });
+  }
+};
+
+/**
  * Get the heading level (0-6) of the line containing pos.
  * @param {number} pos
  * @return {number}
