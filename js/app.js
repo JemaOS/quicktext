@@ -251,8 +251,8 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     if (!view) return;
     const docLength = view.state.doc.length;
 
-    // Only restore if the document has substantial content (>10 chars as sanity check)
-    if (docLength < 10) return;
+    // Only skip while the document is empty (not loaded yet)
+    if (docLength === 0) return;
 
     const key = formattingKey_();
     if (!key) return;
@@ -386,7 +386,9 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   const restoredFormattingKeys_ = new Set();
   const restoreFormattingForCurrentTab_ = () => {
     const view = this.editor_?.editorView_;
-    if (!view || view.state.doc.length < 10) return;
+    // Only skip while the document is still empty (content not loaded yet);
+    // short documents (1-9 chars) are legitimate and must be restored.
+    if (!view || view.state.doc.length === 0) return;
     const key = formattingKey_();
     if (!key || restoredFormattingKeys_.has(key)) return;
     restoredFormattingKeys_.add(key);
