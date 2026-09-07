@@ -194,7 +194,7 @@
             <div class="group" role="radiogroup" aria-labelledby="setting-theme-heading">
               <h2 id="setting-theme-heading"><span i18n-content="themeSetting"></span></h2>
               <div class="mdc-form-field">
-                <label for="setting-theme-default" i18n-content="DeviceThemeOption"></label>
+                <label for="setting-theme-default" i18n-content="deviceThemeOption"></label>
                 <div class="mdc-radio">
                   <input class="mdc-radio__native-control" type="radio" id="setting-theme-default" name="setting-theme" value="default">
                   <div class="mdc-radio__background">
@@ -204,7 +204,7 @@
                 </div>
               </div>
               <div class="mdc-form-field">
-                <label for="setting-theme-light" i18n-content="LightThemeOption"></label>
+                <label for="setting-theme-light" i18n-content="lightThemeOption"></label>
                 <div class="mdc-radio">
                   <input class="mdc-radio__native-control" type="radio" id="setting-theme-light" name="setting-theme" value="light">
                   <div class="mdc-radio__background">
@@ -214,9 +214,32 @@
                 </div>
               </div>
               <div class="mdc-form-field">
-                <label for="setting-theme-dark" i18n-content="DarkThemeOption"></label>
+                <label for="setting-theme-dark" i18n-content="darkThemeOption"></label>
                 <div class="mdc-radio">
                   <input class="mdc-radio__native-control" type="radio" id="setting-theme-dark" name="setting-theme" value="dark">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="group" role="radiogroup" aria-labelledby="setting-language-heading">
+              <h2 id="setting-language-heading"><span i18n-content="languageSetting"></span></h2>
+              <div class="mdc-form-field">
+                <label for="setting-language-en" i18n-content="englishLanguageOption"></label>
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="setting-language-en" name="setting-language" value="en">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="mdc-form-field">
+                <label for="setting-language-fr" i18n-content="frenchLanguageOption"></label>
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="setting-language-fr" name="setting-language" value="fr">
                   <div class="mdc-radio__background">
                     <div class="mdc-radio__outer-circle"></div>
                     <div class="mdc-radio__inner-circle"></div>
@@ -250,27 +273,36 @@
         <button class="mdc-icon-button material-icons" id="toggle-sidebar" i18n-values="title:openSidebarButton;aria-label:openSidebarButton">menu</button>
         
         <div class="format-toolbar">
-          <button class="toolbar-btn mdc-icon-button material-icons" id="cut-btn" title="Couper (Ctrl+X)">content_cut</button>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="copy-btn" title="Copier (Ctrl+C)">content_copy</button>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="paste-btn" title="Coller (Ctrl+V)">content_paste</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="cut-btn"
+              i18n-values="title:cutButtonTooltip;aria-label:cutButtonTooltip">content_cut</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="copy-btn"
+              i18n-values="title:copyButtonTooltip;aria-label:copyButtonTooltip">content_copy</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="paste-btn"
+              i18n-values="title:pasteButtonTooltip;aria-label:pasteButtonTooltip">content_paste</button>
           <div class="toolbar-divider"></div>
-          <label for="heading-select" class="sr-only">Style de titre</label>
-          <select id="heading-select" class="toolbar-select toolbar-select--heading" aria-label="Style de titre" title="Style de titre">
-            <option value="0">Corps</option>
-            <option value="1">Titre (H1)</option>
-            <option value="2">Sous-titre (H2)</option>
-            <option value="3">Rubrique (H3)</option>
-            <option value="4">Sous-rubrique (H4)</option>
-            <option value="5">Section (H5)</option>
-            <option value="6">Sous-section (H6)</option>
+          <label for="heading-select" class="sr-only" i18n-content="headingStyleLabel"></label>
+          <select id="heading-select" class="toolbar-select toolbar-select--heading"
+              i18n-values="title:headingStyleLabel;aria-label:headingStyleLabel">
+            <option value="0" i18n-content="headingBodyOption"></option>
+            <option value="1" i18n-content="heading1Option"></option>
+            <option value="2" i18n-content="heading2Option"></option>
+            <option value="3" i18n-content="heading3Option"></option>
+            <option value="4" i18n-content="heading4Option"></option>
+            <option value="5" i18n-content="heading5Option"></option>
+            <option value="6" i18n-content="heading6Option"></option>
           </select>
           <div class="toolbar-divider"></div>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="bold-btn" title="Gras">format_bold</button>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="italic-btn" title="Italique">format_italic</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="bold-btn"
+              i18n-values="title:boldButtonTooltip;aria-label:boldButtonTooltip">format_bold</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="italic-btn"
+              i18n-values="title:italicButtonTooltip;aria-label:italicButtonTooltip">format_italic</button>
           <div class="toolbar-divider"></div>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="align-left-btn" title="Aligner à gauche">format_align_left</button>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="align-center-btn" title="Centrer">format_align_center</button>
-          <button class="toolbar-btn mdc-icon-button material-icons" id="align-right-btn" title="Aligner à droite">format_align_right</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="align-left-btn"
+              i18n-values="title:alignLeftButtonTooltip;aria-label:alignLeftButtonTooltip">format_align_left</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="align-center-btn"
+              i18n-values="title:alignCenterButtonTooltip;aria-label:alignCenterButtonTooltip">format_align_center</button>
+          <button class="toolbar-btn mdc-icon-button material-icons" id="align-right-btn"
+              i18n-values="title:alignRightButtonTooltip;aria-label:alignRightButtonTooltip">format_align_right</button>
         </div>
 
         <div class="search-container">
@@ -290,7 +322,7 @@
           <button
               class="pwa-install-button mdc-icon-button material-icons"
               id="pwa-install-search"
-              title="Installer l'application"
+              i18n-values="title:installAppTooltip;aria-label:installAppTooltip"
               style="display: none;">download</button>
         </div>
         <div id="title-filename"></div>
@@ -308,16 +340,16 @@
             i18n-values="title:closeButton;aria-label:closeButton">close</button>
       </header>
 
-      <div id="editor" role="main" aria-label="Zone de texte principale" aria-labelledby="title-filename"></div>
+      <div id="editor" role="main" i18n-values="aria-label:editorAriaLabel" aria-labelledby="title-filename"></div>
 
       <!-- Status bar inside main-container so it's part of the flex column -->
       <div id="status-bar">
         <span class="status-item" id="status-position">Ln 1, Col 1</span>
         <span class="status-sep"></span>
-        <span class="status-item" id="status-chars">0 caractères</span>
+        <span class="status-item" id="status-chars" i18n-content="statusZeroChars"></span>
         <span class="status-spacer"></span>
         <span class="status-copyright">
-          Développé par <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> © 2026 • Open Source &amp; Libre
+          <span i18n-content="developedBy"></span> <a href="https://www.jematechnology.fr/" target="_blank" rel="noopener noreferrer">Jema Technology</a> <span i18n-content="footerSuffix"></span>
         </span>
         <span class="status-spacer"></span>
         <span class="status-item" id="status-encoding">UTF-8</span>
@@ -414,7 +446,7 @@
       window.showInstallPrompt = async function() {
         if (!deferredPrompt) {
           console.log('[PWA] No install prompt available');
-          alert('Pour installer QuickText comme application:\n\n• Sur Chrome: Menu ⋮ > Installer QuickText\n• Sur Chromium OS: Menu ⋮ > Installer QuickText\n• Sur mobile: Ajouter à l\'écran d\'accueil');
+          alert(chrome.i18n.getMessage('installInstructions'));
           return;
         }
         deferredPrompt.prompt();

@@ -65,8 +65,12 @@ const PWACompat = (function() {
      */
     showSaveFilePicker: async function(params, callback) {
       try {
+        const untitledMessage = chrome.i18n.getMessage('untitledFileName');
+        const untitledName =
+            (untitledMessage && untitledMessage !== 'untitledFileName') ?
+            untitledMessage : 'Untitled';
         const fileHandle = await window.showSaveFilePicker({
-          suggestedName: params.suggestedName || 'sans_titre.txt',
+          suggestedName: params.suggestedName || (untitledName + '.txt'),
           types: [{
             description: 'Text Files',
             accept: {

@@ -120,10 +120,14 @@ TextApp.prototype.setupStatusBar_ = function() {
     if (charsEl) {
       if (!sel.empty) {
         const n = sel.to - sel.from;
-        charsEl.textContent = `${n} sélectionné${n > 1 ? 's' : ''}`;
+        charsEl.textContent = n === 1
+            ? chrome.i18n.getMessage('statusSelectionSingular')
+            : chrome.i18n.getMessage('statusSelectionPlural', [n]);
       } else {
         const total = state.doc.length;
-        charsEl.textContent = `${total} caractère${total !== 1 ? 's' : ''}`;
+        charsEl.textContent = total === 1
+            ? chrome.i18n.getMessage('statusCharSingular')
+            : chrome.i18n.getMessage('statusCharsPlural', [total]);
       }
     }
   };
@@ -145,6 +149,11 @@ TextApp.prototype.setupStatusBar_ = function() {
 
   // Update on document change
   $(document).bind('docchange', () => {
+    updateStatus();
+  });
+
+  // Update on UI language change
+  $(document).bind('uilanguagechange', () => {
     updateStatus();
   });
 };

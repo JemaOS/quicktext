@@ -17,6 +17,7 @@ function MenuController(tabs) {
   $(document).bind('tabpathchange', this.onTabPathChange.bind(this));
   $(document).bind('tabrenamed', this.onTabRenamed.bind(this));
   $(document).bind('tabsave', this.onTabSave.bind(this));
+  $(document).bind('uilanguagechange', this.onLanguageChange.bind(this));
 }
 
 /**
@@ -167,6 +168,21 @@ MenuController.prototype.onTabSave = function(e, tab) {
   $('#tab' + tab.getId()).removeClass('unsaved');
 };
 
+/**
+ * Refreshes the imperatively-set translatable texts of the tab list when
+ * the UI language changes: the close buttons' tooltips and the display
+ * name of untitled tabs (tabs backed by a file keep their file name).
+ */
+MenuController.prototype.onLanguageChange = function() {
+  $('#tabs-list .close').attr('title', chrome.i18n.getMessage('closeFileButton'));
+  if (!this.tabs_) return;
+  for (const tab of this.tabs_.tabs_) {
+    if (!tab.getEntry() && !tab.customName_) {
+      $('#tab' + tab.getId() + '.filename').text(tab.getName());
+    }
+  }
+};
+
 MenuController.prototype.onSwitchTab = function(e, tab) {
   // Add the .active class to the <li> wrapping the tab button so the <li> gets
   // the active background-color style.
@@ -196,16 +212,16 @@ MenuController.prototype.saveas_ = function() {
 
 MenuController.prototype.openShortcuts_ = function() {
   this.tabs_.dialogController_.setText(
-    "Raccourcis clavier :",
-    "Ctrl+N : Nouveau fichier",
-    "Ctrl+O : Ouvrir un fichier",
-    "Ctrl+S : Enregistrer",
-    "Ctrl+Maj+S : Enregistrer sous",
-    "Ctrl+F : Rechercher",
-    "Ctrl+Tab : Onglet suivant",
-    "Ctrl+Maj+Tab : Onglet précédent",
-    "Ctrl+E : Barre latérale",
-    "Ctrl+W : Fermer l'onglet"
+    chrome.i18n.getMessage('shortcutsTitle'),
+    chrome.i18n.getMessage('shortcutNew'),
+    chrome.i18n.getMessage('shortcutOpen'),
+    chrome.i18n.getMessage('shortcutSave'),
+    chrome.i18n.getMessage('shortcutSaveAs'),
+    chrome.i18n.getMessage('shortcutSearch'),
+    chrome.i18n.getMessage('shortcutNextTab'),
+    chrome.i18n.getMessage('shortcutPrevTab'),
+    chrome.i18n.getMessage('shortcutSidebar'),
+    chrome.i18n.getMessage('shortcutCloseTab')
   );
   this.tabs_.dialogController_.resetButtons();
   this.tabs_.dialogController_.addButton('ok', chrome.i18n.getMessage('okDialogButton'));

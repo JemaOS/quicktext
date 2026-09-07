@@ -23,6 +23,7 @@ function WindowController(editor, settings, tabs) {
   $(document).bind('tabpathchange', this.onTabPathChange.bind(this));
   $(document).bind('tabrenamed', this.onChangeTab_.bind(this));
   $(document).bind('tabsave', this.onTabChange_.bind(this));
+  $(document).bind('uilanguagechange', this.onLanguageChange_.bind(this));
 
   this.initUI_();
   
@@ -198,6 +199,25 @@ WindowController.prototype.toggleSidebar_ = function() {
         .attr('title', chrome.i18n.getMessage('openSidebarButton'));
   } else {
     this.openSidebar();
+  }
+};
+
+/**
+ * Re-applies the translatable texts that are set imperatively (window
+ * title, sidebar toggle and maximize/restore tooltips) when the UI
+ * language changes.
+ * @private
+ */
+WindowController.prototype.onLanguageChange_ = function() {
+  $('#toggle-sidebar').attr('title', chrome.i18n.getMessage(
+      this.settings_.get('sidebaropen') ?
+      'closeSidebarButton' : 'openSidebarButton'));
+  $('#window-maximize').attr('title', chrome.i18n.getMessage(
+      window.chrome.app.window.current().isMaximized() ?
+      'restoreButton' : 'maximizeButton'));
+  const currentTab = this.tabs_ && this.tabs_.getCurrentTab();
+  if (currentTab) {
+    $('#title-filename').text(currentTab.getName());
   }
 };
 

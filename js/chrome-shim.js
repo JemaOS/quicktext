@@ -5,16 +5,263 @@
 // Provides Chrome App API compatibility for PWAs using File System Access API
 
 (function() {
-  // Only add shim if running as PWA (no chrome API available)
+  // ============================================================
+  // chrome.i18n shim (always installed, even over a native
+  // chrome.i18n in Chrome App mode, so the language toggle works
+  // everywhere - the codebase only ever calls chrome.i18n.getMessage).
+  // ============================================================
+  window.chrome = window.chrome || {};
+
+  // All user-visible strings, keyed by language. Seeded from
+  // _locales/en/messages.json and _locales/fr/messages.json (used by the
+  // Chrome extension build), plus keys that only existed in this shim and
+  // keys for strings that used to be hardcoded in the UI.
+  const I18N_MESSAGES = {
+    en: {
+      "appDesc": "A text editor for Chrome OS and Chrome.",
+      "fileMenuNew": "New",
+      "fileMenuInstall": "Install App",
+      "fileMenuOpen": "Open",
+      "fileMenuSave": "Save",
+      "fileMenuSaveas": "Save as",
+      "menuSettings": "Settings",
+      "menuShortcuts": "Keyboard shortcuts",
+      "fontsizeSetting": "Font size",
+      "fontsizeTooltip": "Set with Ctrl- and Ctrl+",
+      "spacestabSetting": "Tabs to spaces",
+      "tabsizeSetting": "Tab size",
+      "wraplinesSetting": "Wrap lines",
+      "linenumbersSetting": "Show line numbers",
+      "smartindentSetting": "Smart indent",
+      "themeSetting": "Themes",
+      "alwaysOnTopSetting": "Always on top",
+      "deviceThemeOption": "Use device theme",
+      "lightThemeOption": "Light",
+      "darkThemeOption": "Dark",
+      "helpSection": "Help",
+      "closeSettings": "Back",
+      "openSidebarButton": "Open sidebar",
+      "closeSidebarButton": "Close sidebar",
+      "searchPlaceholder": "Find...",
+      "searchCounting": "$1 of $2",
+      "searchNextButton": "Next",
+      "searchPreviousButton": "Previous",
+      "errorTitle": "Error",
+      "loadingTitle": "Loading...",
+      "minimizeButton": "Minimize",
+      "maximizeButton": "Maximize",
+      "restoreButton": "Restore",
+      "closeButton": "Quit",
+      "yesDialogButton": "Yes",
+      "noDialogButton": "No",
+      "cancelDialogButton": "Cancel",
+      "saveFilePromptLine1": "$1 has been modified.",
+      "saveFilePromptLine2": "Do you want to save it before closing?",
+      "okDialogButton": "OK",
+      "closeFileButton": "Close file",
+      "untitledFile": "Untitled $1",
+      "languageSetting": "Language",
+      "englishLanguageOption": "English",
+      "frenchLanguageOption": "Français",
+      "untitledFileName": "Untitled",
+      "cutButtonTooltip": "Cut (Ctrl+X)",
+      "copyButtonTooltip": "Copy (Ctrl+C)",
+      "pasteButtonTooltip": "Paste (Ctrl+V)",
+      "headingStyleLabel": "Heading style",
+      "headingBodyOption": "Body",
+      "heading1Option": "Title (H1)",
+      "heading2Option": "Subtitle (H2)",
+      "heading3Option": "Heading (H3)",
+      "heading4Option": "Subheading (H4)",
+      "heading5Option": "Section (H5)",
+      "heading6Option": "Subsection (H6)",
+      "boldButtonTooltip": "Bold",
+      "italicButtonTooltip": "Italic",
+      "alignLeftButtonTooltip": "Align left",
+      "alignCenterButtonTooltip": "Center",
+      "alignRightButtonTooltip": "Align right",
+      "installAppTooltip": "Install app",
+      "installInstructions": "To install QuickText as an app:\n\n• On Chrome: Menu ⋮ > Install QuickText\n• On Chromium OS: Menu ⋮ > Install QuickText\n• On mobile: Add to home screen",
+      "editorAriaLabel": "Main text area",
+      "developedBy": "Developed by",
+      "footerSuffix": "© 2026 • Open Source & Free",
+      "statusZeroChars": "0 characters",
+      "statusCharSingular": "1 character",
+      "statusCharsPlural": "$1 characters",
+      "statusSelectionSingular": "1 selected",
+      "statusSelectionPlural": "$1 selected",
+      "shortcutsTitle": "Keyboard shortcuts:",
+      "shortcutNew": "Ctrl+N : New file",
+      "shortcutOpen": "Ctrl+O : Open a file",
+      "shortcutSave": "Ctrl+S : Save",
+      "shortcutSaveAs": "Ctrl+Shift+S : Save as",
+      "shortcutSearch": "Ctrl+F : Search",
+      "shortcutNextTab": "Ctrl+Tab : Next tab",
+      "shortcutPrevTab": "Ctrl+Shift+Tab : Previous tab",
+      "shortcutSidebar": "Ctrl+E : Sidebar",
+      "shortcutCloseTab": "Ctrl+W : Close tab"
+    },
+    fr: {
+      "appDesc": "Éditeur de texte pour Chrome OS et Chrome.",
+      "fileMenuNew": "Nouveau",
+      "fileMenuInstall": "Installer l'application",
+      "fileMenuOpen": "Ouvrir",
+      "fileMenuSave": "Enregistrer",
+      "fileMenuSaveas": "Enregistrer sous",
+      "menuSettings": "Paramètres",
+      "menuShortcuts": "Raccourcis clavier",
+      "fontsizeSetting": "Taille de police",
+      "fontsizeTooltip": "Définir avec Ctrl- et Ctrl+",
+      "spacestabSetting": "Convertir les tabulations en espaces",
+      "tabsizeSetting": "Taille des tabulations",
+      "wraplinesSetting": "Encapsuler les lignes",
+      "linenumbersSetting": "Afficher les numéros de lignes",
+      "smartindentSetting": "Retrait intelligent",
+      "themeSetting": "Thèmes",
+      "alwaysOnTopSetting": "Toujours au premier plan",
+      "deviceThemeOption": "Utiliser le thème de l'appareil",
+      "lightThemeOption": "Clair",
+      "darkThemeOption": "Foncé",
+      "helpSection": "Aide",
+      "closeSettings": "Retour",
+      "openSidebarButton": "Ouvrir la barre latérale",
+      "closeSidebarButton": "Fermer la barre latérale",
+      "searchPlaceholder": "Rechercher…",
+      "searchCounting": "$1 sur $2",
+      "searchNextButton": "Suivant",
+      "searchPreviousButton": "Précédent",
+      "errorTitle": "Erreur",
+      "loadingTitle": "Chargement…",
+      "minimizeButton": "Réduire",
+      "maximizeButton": "Agrandir",
+      "restoreButton": "Restaurer",
+      "closeButton": "Quitter",
+      "yesDialogButton": "Oui",
+      "noDialogButton": "Non",
+      "cancelDialogButton": "Annuler",
+      "saveFilePromptLine1": "$1 a été modifié.",
+      "saveFilePromptLine2": "Voulez-vous enregistrer le fichier avant de le fermer ?",
+      "okDialogButton": "OK",
+      "closeFileButton": "Fermer le fichier",
+      "untitledFile": "Sans titre $1",
+      "languageSetting": "Langue",
+      "englishLanguageOption": "English",
+      "frenchLanguageOption": "Français",
+      "untitledFileName": "Sans titre",
+      "cutButtonTooltip": "Couper (Ctrl+X)",
+      "copyButtonTooltip": "Copier (Ctrl+C)",
+      "pasteButtonTooltip": "Coller (Ctrl+V)",
+      "headingStyleLabel": "Style de titre",
+      "headingBodyOption": "Corps",
+      "heading1Option": "Titre (H1)",
+      "heading2Option": "Sous-titre (H2)",
+      "heading3Option": "Rubrique (H3)",
+      "heading4Option": "Sous-rubrique (H4)",
+      "heading5Option": "Section (H5)",
+      "heading6Option": "Sous-section (H6)",
+      "boldButtonTooltip": "Gras",
+      "italicButtonTooltip": "Italique",
+      "alignLeftButtonTooltip": "Aligner à gauche",
+      "alignCenterButtonTooltip": "Centrer",
+      "alignRightButtonTooltip": "Aligner à droite",
+      "installAppTooltip": "Installer l'application",
+      "installInstructions": "Pour installer QuickText comme application:\n\n• Sur Chrome: Menu ⋮ > Installer QuickText\n• Sur Chromium OS: Menu ⋮ > Installer QuickText\n• Sur mobile: Ajouter à l'écran d'accueil",
+      "editorAriaLabel": "Zone de texte principale",
+      "developedBy": "Développé par",
+      "footerSuffix": "© 2026 • Open Source & Libre",
+      "statusZeroChars": "0 caractères",
+      "statusCharSingular": "1 caractère",
+      "statusCharsPlural": "$1 caractères",
+      "statusSelectionSingular": "1 sélectionné",
+      "statusSelectionPlural": "$1 sélectionnés",
+      "shortcutsTitle": "Raccourcis clavier :",
+      "shortcutNew": "Ctrl+N : Nouveau fichier",
+      "shortcutOpen": "Ctrl+O : Ouvrir un fichier",
+      "shortcutSave": "Ctrl+S : Enregistrer",
+      "shortcutSaveAs": "Ctrl+Maj+S : Enregistrer sous",
+      "shortcutSearch": "Ctrl+F : Rechercher",
+      "shortcutNextTab": "Ctrl+Tab : Onglet suivant",
+      "shortcutPrevTab": "Ctrl+Maj+Tab : Onglet précédent",
+      "shortcutSidebar": "Ctrl+E : Barre latérale",
+      "shortcutCloseTab": "Ctrl+W : Fermer l'onglet"
+    }
+  };
+
+  /**
+   * The current UI language. It always starts from the system language
+   * (never persisted): the settings toggle is a runtime override only and
+   * the OS language wins on every page load and languagechange event.
+   */
+  function getSystemLanguage() {
+    const lang = (navigator.language || 'en').split('-')[0].toLowerCase();
+    return lang === 'fr' ? 'fr' : 'en';
+  }
+
+  let currentLanguage_ = getSystemLanguage();
+
+  /**
+   * Applies a new UI language: updates <html lang>, re-translates all
+   * static i18n-content/i18n-values nodes, and lets controllers refresh
+   * their imperatively-set texts.
+   * @param {string} lang 'en' or 'fr'.
+   */
+  function applyLanguage(lang) {
+    currentLanguage_ = lang;
+    document.documentElement.lang = lang;
+    if (typeof i18nTemplate !== 'undefined' && i18nTemplate.process) {
+      i18nTemplate.process(document);
+    }
+    if (typeof $ !== 'undefined' && $.event && $.event.trigger) {
+      $.event.trigger('uilanguagechange', [lang]);
+    }
+  }
+
+  chrome.i18n = {
+    getMessage: function(messageName, substitutions) {
+      let text = I18N_MESSAGES[currentLanguage_] &&
+          I18N_MESSAGES[currentLanguage_][messageName];
+      if (text === undefined) {
+        text = I18N_MESSAGES.en[messageName];
+      }
+      if (text === undefined) return messageName;
+      if (substitutions) {
+        if (!Array.isArray(substitutions)) substitutions = [substitutions];
+        substitutions.forEach((sub, i) => {
+          text = text.replace('$' + (i + 1), sub);
+        });
+      }
+      return text;
+    },
+
+    /** @return {string} The current UI language ('en' or 'fr'). */
+    getLanguage: function() {
+      return currentLanguage_;
+    },
+
+    /**
+     * Runtime language override used by the settings toggle. Not persisted:
+     * the system language always wins on page load and on languagechange.
+     * @param {string} lang 'en' or 'fr'.
+     */
+    setLanguage: function(lang) {
+      applyLanguage(lang === 'fr' ? 'fr' : 'en');
+    }
+  };
+
+  // Follow the OS language automatically (JemaOS system language change).
+  window.addEventListener('languagechange', function() {
+    applyLanguage(getSystemLanguage());
+  });
+
+  document.documentElement.lang = currentLanguage_;
+
+  // The remaining shims are only needed when running as a PWA.
   if (typeof chrome !== 'undefined' && chrome.fileSystem) {
     console.log('Running as Chrome App - using native APIs');
     return;
   }
 
   console.log('Running as PWA - using shim for Chrome APIs');
-
-  // Create minimal chrome namespace
-  window.chrome = window.chrome || {};
 
   // Shim for chrome.fileSystem
   chrome.fileSystem = {
@@ -23,7 +270,8 @@
         if (params.type === 'saveFile') {
           // Save file dialog
           window.showSaveFilePicker({
-            suggestedName: params.suggestedName || 'sans_titre.txt',
+            suggestedName: params.suggestedName ||
+                (chrome.i18n.getMessage('untitledFileName') + '.txt'),
             types: [{
               description: 'Text Files',
               accept: {
@@ -261,66 +509,6 @@
   chrome.storage.onChanged = {
     addListener: function(callback) {
       storageListeners.push(callback);
-    }
-  };
-
-  // Shim for chrome.i18n
-  const messages = {
-    "appDesc": { "message": "Éditeur de texte pour Chrome OS et Chrome." },
-    "fileMenuNew": { "message": "Nouveau" },
-    "fileMenuOpen": { "message": "Ouvrir" },
-    "fileMenuSave": { "message": "Enregistrer" },
-    "fileMenuSaveas": { "message": "Enregistrer sous" },
-    "menuSettings": { "message": "Paramètres" },
-    "menuShortcuts": { "message": "Raccourcis clavier" },
-    "fontsizeSetting": { "message": "Taille de police" },
-    "fontsizeTooltip": { "message": "Définir avec Ctrl- et Ctrl+" },
-    "spacestabSetting": { "message": "Convertir les tabulations en espaces" },
-    "tabsizeSetting": { "message": "Taille des tabulations" },
-    "wraplinesSetting": { "message": "Encapsuler les lignes" },
-    "linenumbersSetting": { "message": "Afficher les numéros de lignes" },
-    "smartindentSetting": { "message": "Retrait intelligent" },
-    "themeSetting": { "message": "Thèmes" },
-    "alwaysOnTopSetting": { "message": "Toujours au premier plan" },
-    "deviceThemeOption": { "message": "Utiliser le thème de l'appareil" },
-    "lightThemeOption": { "message": "Clair" },
-    "darkThemeOption": { "message": "Foncé" },
-    "helpSection": { "message": "Aide" },
-    "closeSettings": { "message": "Retour" },
-    "openSidebarButton": { "message": "Ouvrir la barre latérale" },
-    "closeSidebarButton": { "message": "Fermer la barre latérale" },
-    "searchPlaceholder": { "message": "Rechercher…" },
-    "searchCounting": { "message": "$1 sur $2" },
-    "searchNextButton": { "message": "Suivant" },
-    "searchPreviousButton": { "message": "Précédent" },
-    "errorTitle": { "message": "Erreur" },
-    "loadingTitle": { "message": "Chargement…" },
-    "minimizeButton": { "message": "Réduire" },
-    "maximizeButton": { "message": "Agrandir" },
-    "restoreButton": { "message": "Restaurer" },
-    "closeButton": { "message": "Quitter" },
-    "yesDialogButton": { "message": "Oui" },
-    "noDialogButton": { "message": "Non" },
-    "cancelDialogButton": { "message": "Annuler" },
-    "saveFilePromptLine1": { "message": "$1 a été modifié." },
-    "saveFilePromptLine2": { "message": "Voulez-vous enregistrer le fichier avant de le fermer ?" },
-    "okDialogButton": { "message": "OK" },
-    "closeFileButton": { "message": "Fermer le fichier" },
-    "untitledFile": { "message": "Sans titre $1" }
-  };
-
-  chrome.i18n = {
-    getMessage: function(messageName, substitutions) {
-      let msg = messages[messageName];
-      if (!msg) return messageName;
-      let text = msg.message;
-      if (substitutions) {
-        if (!Array.isArray(substitutions)) substitutions = [substitutions];
-        substitutions.forEach((sub, i) => {
-          text = text.replace('$' + (i + 1), sub);
-        });
-      }
-      return text;
     }
   };
 

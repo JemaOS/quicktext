@@ -16,6 +16,7 @@ function SettingsController(settings) {
   $(document).bind('settingschange', this.onSettingChange_.bind(this));
 
   this.addInputListeners_();
+  this.addLanguageListeners_();
 
   $('#open-settings').click(this.openSettings_.bind(this));
   $('#close-settings').click(this.closeSettings.bind(this));
@@ -40,6 +41,30 @@ SettingsController.prototype.addInputListeners_ = function() {
         break;
     }
   }
+};
+
+/**
+ * Wires the language radio options. Unlike the other settings, the language
+ * choice is a runtime override only and is never persisted: it is applied
+ * through chrome.i18n.setLanguage, and the OS language always wins on page
+ * load and on the languagechange event.
+ * @private
+ */
+SettingsController.prototype.addLanguageListeners_ = function() {
+  const radios = document.querySelectorAll('input[name=setting-language]');
+  const syncRadios = () => {
+    const language = chrome.i18n.getLanguage();
+    for (const element of radios) {
+      element.checked = element.getAttribute('value') === language;
+    }
+  };
+  for (const element of radios) {
+    element.addEventListener('change', () => {
+      chrome.i18n.setLanguage(element.getAttribute('value'));
+    });
+  }
+  syncRadios();
+  $(document).bind('uilanguagechange', syncRadios);
 };
 
 SettingsController.prototype.openSettings_ = function() {
