@@ -46,8 +46,8 @@ SettingsController.prototype.addInputListeners_ = function() {
 /**
  * Wires the language radio options. Unlike the other settings, the language
  * choice is a runtime override only and is never persisted: it is applied
- * through chrome.i18n.setLanguage, and the OS language always wins on page
- * load and on the languagechange event.
+ * through chrome.i18n.setLanguage, and every page load starts back in
+ * French.
  * @private
  */
 SettingsController.prototype.addLanguageListeners_ = function() {

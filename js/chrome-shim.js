@@ -188,16 +188,11 @@
   };
 
   /**
-   * The current UI language. It always starts from the system language
-   * (never persisted): the settings toggle is a runtime override only and
-   * the OS language wins on every page load and languagechange event.
+   * The current UI language. French by default for JemaOS PWAs
+   * (never persisted): the settings toggle is a runtime override only
+   * and every page load starts back in French.
    */
-  function getSystemLanguage() {
-    const lang = (navigator.language || 'en').split('-')[0].toLowerCase();
-    return lang === 'fr' ? 'fr' : 'en';
-  }
-
-  let currentLanguage_ = getSystemLanguage();
+  let currentLanguage_ = 'fr';
 
   /**
    * Applies a new UI language: updates <html lang>, re-translates all
@@ -240,18 +235,13 @@
 
     /**
      * Runtime language override used by the settings toggle. Not persisted:
-     * the system language always wins on page load and on languagechange.
+     * every page load starts back in French.
      * @param {string} lang 'en' or 'fr'.
      */
     setLanguage: function(lang) {
       applyLanguage(lang === 'fr' ? 'fr' : 'en');
     }
   };
-
-  // Follow the OS language automatically (JemaOS system language change).
-  window.addEventListener('languagechange', function() {
-    applyLanguage(getSystemLanguage());
-  });
 
   document.documentElement.lang = currentLanguage_;
 
