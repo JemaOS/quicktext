@@ -18,3 +18,8 @@ third_party/codemirror.next/package-lock.json
 third_party/codemirror.next/rollup.config.js
 README.md
 _locales
+
+# App scripts are concatenated+minified into js/app.<hash>.min.js (see
+# scripts/build.mjs); only the bundle needs to be deployed.
+js/*.js
+!js/app.*.min.js
