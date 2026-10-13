@@ -7,9 +7,6 @@ package-lock.json
 .env.local
 .vercel
 
-# Only the Material Icons font is used at runtime — ignore every other icon set.
-third_party/material-design-icons/*
-!third_party/material-design-icons/iconfont/
 third_party/jquery/jquery-1.8.3.js
 third_party/jquery/LICENSE
 third_party/codemirror.next/bundle.ts

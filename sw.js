@@ -11,7 +11,7 @@
 //    re-download the ~1.9 MB code payload.
 //  - Precache is resilient: one failed asset never aborts the whole install.
 
-const CACHE_NAME = 'quicktext-v24';
+const CACHE_NAME = 'quicktext-v25';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
