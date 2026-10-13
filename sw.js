@@ -2,9 +2,16 @@
    Distributed under the license specified in the root directory of this project. */
 
 // Service Worker for QuickText PWA
-// Provides offline functionality and caching
+// Provides offline functionality and fast repeat loads.
+//
+// Strategy:
+//  - Navigation (HTML) + manifest: network-first, cache fallback (fresh app shell).
+//  - Everything else (js/css/third_party/icon/fonts): stale-while-revalidate
+//    (instant from cache, refreshed in the background) so repeat visits do NOT
+//    re-download the ~1.9 MB code payload.
+//  - Precache is resilient: one failed asset never aborts the whole install.
 
-const CACHE_NAME = 'quicktext-v22';
+const CACHE_NAME = 'quicktext-v23';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -26,8 +33,6 @@ const ASSETS_TO_CACHE = [
   '/js/controllers/search.js',
   '/js/controllers/settings.js',
   '/js/controllers/window.js',
-  '/icon/16x16.png',
-  '/icon/32x32.png',
   '/icon/48x48.png',
   '/icon/64x64.png',
   '/icon/96x96.png',
@@ -43,36 +48,45 @@ const ASSETS_TO_CACHE = [
   '/third_party/codemirror.next/codemirror.next.bin.js'
 ];
 
-// Install event - cache assets
+// Install event - precache assets resiliently (one failure must not abort all).
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('QuickText: Caching app assets');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .then(() => {
-        return self.skipWaiting();
-      })
+    caches.open(CACHE_NAME).then(async (cache) => {
+      console.log('QuickText: Caching app assets');
+      await Promise.allSettled(
+        ASSETS_TO_CACHE.map(async (url) => {
+          try {
+            const response = await fetch(url, { cache: 'reload' });
+            if (isCacheableResponse(response)) {
+              await cache.put(url, response);
+            }
+          } catch (error) {
+            console.warn('QuickText: failed to precache', url, error);
+          }
+        })
+      );
+      return self.skipWaiting();
+    })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        )
+      )
+      .then(() => {
+        return self.clients.claim();
+      })
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - route requests to the right strategy
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
@@ -85,63 +99,67 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Use async function for cleaner code
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(handleFetch(event.request));
 });
 
+function isNavigate(request) {
+  if (request.mode === 'navigate') {
+    return true;
+  }
+  const { pathname } = new URL(request.url);
+  return pathname === '/' || pathname.endsWith('.html');
+}
+
 async function handleFetch(request) {
+  // Fresh app shell first (so a deploy is picked up), everything else served
+  // from cache instantly and refreshed in the background.
+  if (isNavigate(request)) {
+    return networkFirst(request);
+  }
+  return staleWhileRevalidate(request);
+}
+
+async function networkFirst(request) {
   try {
-    // Network first for HTML, JS, and CSS to always get latest code
-    const url = new URL(request.url);
-    const isCodeAsset = url.pathname.endsWith('.js') ||
-                        url.pathname.endsWith('.css') ||
-                        url.pathname.endsWith('.html') ||
-                        url.pathname === '/';
-
-    if (isCodeAsset) {
-      try {
-        const networkResponse = await fetch(request);
-        if (isCacheableResponse(networkResponse)) {
-          const responseToCache = networkResponse.clone();
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(request, responseToCache);
-        }
-        return networkResponse;
-      } catch (error) {
-        // Network failed, fall back to cache
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) return cachedResponse;
-        return caches.match('/index.html');
-      }
-    }
-
-    // Cache first for static assets (images, fonts, etc.)
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Not in cache, fetch from network
     const networkResponse = await fetch(request);
-    
-    // Cache successful responses
     if (isCacheableResponse(networkResponse)) {
-      const responseToCache = networkResponse.clone();
       const cache = await caches.open(CACHE_NAME);
-      await cache.put(request, responseToCache);
+      await cache.put(request, networkResponse.clone());
     }
-    
     return networkResponse;
   } catch (error) {
-    // If both cache and network fail, return the offline page
-    return caches.match('/index.html');
+    const cachedResponse = await caches.match(request);
+    return cachedResponse || caches.match('/index.html');
   }
 }
 
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+
+  const networkPromise = fetch(request)
+    .then((networkResponse) => {
+      if (isCacheableResponse(networkResponse)) {
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    })
+    .catch(() => null);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await networkPromise;
+  return networkResponse || caches.match('/index.html');
+}
+
 function isCacheableResponse(response) {
-  return response && 
-         response.status === 200 && 
-         response.type === 'basic';
+  return response && response.status === 200 && response.type === 'basic';
 }
 
 // Handle file open from file handler API
@@ -149,25 +167,31 @@ async function handleFileOpen(request) {
   try {
     const data = await request.json();
     const fileHandle = data.fileHandle;
-    
+
     // Get the file content
     const file = await fileHandle.getFile();
     const content = await file.text();
-    
-    return new Response(JSON.stringify({
-      success: true,
-      content: content,
-      name: file.name
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        content: content,
+        name: file.name
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   }
 }
 
