@@ -132,13 +132,24 @@ TextApp.prototype.setupStatusBar_ = function() {
     }
   };
 
+  // Coalesce the frequent status updates (keyup/mouseup/click/docchange) into
+  // a single DOM write per animation frame.
+  let updateStatusRaf_ = null;
+  const scheduleUpdateStatus_ = () => {
+    if (updateStatusRaf_ !== null) return;
+    updateStatusRaf_ = requestAnimationFrame(() => {
+      updateStatusRaf_ = null;
+      updateStatus();
+    });
+  };
+
   // Hook into CodeMirror's update listener
   setTimeout(() => {
     const view = this.editor_?.editorView_;
     if (!view) return;
-    view.dom.addEventListener('click',  updateStatus);
-    view.dom.addEventListener('keyup',  updateStatus);
-    view.dom.addEventListener('mouseup', updateStatus);
+    view.dom.addEventListener('click',  scheduleUpdateStatus_);
+    view.dom.addEventListener('keyup',  scheduleUpdateStatus_);
+    view.dom.addEventListener('mouseup', scheduleUpdateStatus_);
     updateStatus();
   }, 300);
 
@@ -149,7 +160,7 @@ TextApp.prototype.setupStatusBar_ = function() {
 
   // Update on document change
   $(document).bind('docchange', () => {
-    updateStatus();
+    scheduleUpdateStatus_();
   });
 
   // Update on UI language change

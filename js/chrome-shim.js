@@ -793,9 +793,12 @@
     }
   });
 
-  // Periodic auto-save every 30 seconds
+  // Periodic auto-save every 30 seconds — only when something changed since the
+  // last save (avoids re-stringifying every tab while idle).
   setInterval(function() {
-    window.saveAllTabsToStorage();
+    if (window.textApp && window.textApp.tabs_ && window.textApp.tabs_.tabsDirty_) {
+      window.saveAllTabsToStorage();
+    }
   }, 30000);
 
   // Shim for FileError

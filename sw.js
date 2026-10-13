@@ -18,7 +18,7 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/css/app.css',
   '/css/print.css',
-  '/js/app.2334e3bf.min.js',
+  '/js/app.dc85b650.min.js',
   '/icon/48x48.png',
   '/icon/64x64.png',
   '/icon/96x96.png',
