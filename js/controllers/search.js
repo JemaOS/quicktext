@@ -5,6 +5,7 @@
  */
 function SearchController(search) {
   this.search_ = search;
+  this.onChangeTimer_ = null;
 
   // When there is an active text selection, focusing the search box with the
   // mouse seems to trigger a recursive focus/focusout pair. It would be good
@@ -13,7 +14,7 @@ function SearchController(search) {
 
   document.getElementById('search-input')
       .addEventListener('focus', () => { this.activateSearch_(); });
-  $('#search-input').bind('input', this.onChange_.bind(this));
+  $('#search-input').bind('input', this.onChangeDebounced_.bind(this));
   $('#search-input').keydown(this.onKeydown_.bind(this));
   // Prevent search deactivation when search count is clicked
   document.getElementById('search-counting')
@@ -79,6 +80,21 @@ SearchController.prototype.deactivateSearch_ = function(e) {
   }
 };
 
+// Debounced so typing a query does not rescan the whole document on every
+// keystroke. Enter flushes immediately (see onKeydown_).
+SearchController.prototype.onChangeDebounced_ = function() {
+  if (this.onChangeTimer_) clearTimeout(this.onChangeTimer_);
+  this.onChangeTimer_ = setTimeout(this.onChange_.bind(this), 180);
+};
+
+SearchController.prototype.flushOnChange_ = function() {
+  if (this.onChangeTimer_) {
+    clearTimeout(this.onChangeTimer_);
+    this.onChangeTimer_ = null;
+    this.onChange_();
+  }
+};
+
 SearchController.prototype.onChange_ = function() {
   const searchString = $('#search-input').val();
   if (searchString === this.search_.getQuery())
@@ -99,6 +115,7 @@ SearchController.prototype.onKeydown_ = function(e) {
   switch (e.key) {
     case 'Enter':
       e.stopPropagation();
+      this.flushOnChange_();
       this.findNext_(e.shiftKey /* reverse */);
       break;
 

@@ -263,9 +263,9 @@ TextApp.prototype.setupFormatToolbar_ = function() {
   };
 
   // Save all formatting (headings + mark decorations) to localStorage
-  const saveFormatting = () => {
+  const saveFormatting = (keyOverride) => {
     if (!this.editor_) return;
-    const key = formattingKey_();
+    const key = keyOverride || formattingKey_();
     if (!key) return;
     const store = readFormattingStore_();
     store[key] = {
@@ -407,18 +407,22 @@ TextApp.prototype.setupFormatToolbar_ = function() {
     updateStyleButtons();
   };
 
-  // Apply format settings on load and whenever CodeMirror re-renders its content div.
-  // Use a MutationObserver so we catch the exact moment .cm-content appears in the DOM.
+  // Apply format settings once the CodeMirror content div appears. We observe
+  // only until the first `.cm-content` shows up, then disconnect, so we no
+  // longer run applyFormat() on every editor DOM mutation (per keystroke).
   const editorContainer = document.getElementById('editor');
   if (editorContainer) {
     const observer = new MutationObserver(() => {
       if (editorContainer.querySelector('.cm-content')) {
         applyFormat();
+        observer.disconnect();
       }
     });
     observer.observe(editorContainer, { childList: true, subtree: true });
+    // Safety net: never keep observing indefinitely.
+    setTimeout(() => observer.disconnect(), 2000);
   }
-  // Apply immediately and at intervals to ensure format is applied
+  // Apply immediately and at intervals as fallbacks for slow mounts.
   applyFormat();
   setTimeout(applyFormat, 100);
   setTimeout(applyFormat, 500);
@@ -456,10 +460,42 @@ TextApp.prototype.setupFormatToolbar_ = function() {
 
   // Also restore on the first document change after load (startup path) and
   // via timed fallbacks for slow content loads.
+  // Persist formatting, debounced: writing to localStorage (JSON parse +
+  // stringify + 3 decoration scans) on every keystroke was running inside the
+  // CodeMirror update. We now coalesce writes and only persist if we are still
+  // on the same tab (to avoid saving the wrong tab's formatting after a switch).
+  let saveFormattingTimer_ = null;
+  let pendingFormattingKey_ = null;
+  const scheduleSaveFormatting_ = () => {
+    const key = formattingKey_();
+    if (!key) return;
+    pendingFormattingKey_ = key;
+    if (saveFormattingTimer_) clearTimeout(saveFormattingTimer_);
+    saveFormattingTimer_ = setTimeout(() => {
+      saveFormattingTimer_ = null;
+      const pendingKey = pendingFormattingKey_;
+      pendingFormattingKey_ = null;
+      if (pendingKey && formattingKey_() === pendingKey) {
+        saveFormatting(pendingKey);
+      }
+    }, 800);
+  };
+  const flushSaveFormatting_ = () => {
+    if (saveFormattingTimer_) {
+      clearTimeout(saveFormattingTimer_);
+      saveFormattingTimer_ = null;
+    }
+    if (pendingFormattingKey_) {
+      saveFormatting(pendingFormattingKey_);
+      pendingFormattingKey_ = null;
+    }
+  };
+
   $(document).bind('docchange', () => {
     restoreFormattingForCurrentTab_();
-    saveFormatting();
+    scheduleSaveFormatting_();
   });
+  window.addEventListener('beforeunload', flushSaveFormatting_);
   setTimeout(restoreFormattingForCurrentTab_, 300);
   setTimeout(restoreFormattingForCurrentTab_, 600);
   setTimeout(restoreFormattingForCurrentTab_, 1200);
