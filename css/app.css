@@ -133,6 +133,17 @@ html.qt-loading *::after {
   transition: none !important;
 }
 
+/* Keep the app chrome hidden until it is fully initialized, so nothing is
+   shown during boot (no unlocalized toolbar / half-laid-out UI). It fades in
+   the moment js/app.js removes qt-loading at the end of init. */
+html.qt-loading #window-container {
+  opacity: 0;
+  visibility: hidden;
+}
+#window-container {
+  transition: opacity 160ms ease-out;
+}
+
 /* Material Icons work via ligatures: the button text is the icon name
    (content_cut, format_bold…). Hide that text while the icon font is
    loading so it never flashes as plain words on first paint. The
