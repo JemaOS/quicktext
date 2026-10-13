@@ -783,8 +783,6 @@ Tabs.prototype.saveEntry_ = function(tab, entry, opt_callback) {
 Tabs.prototype.onDocChanged_ = function() {
   if (!this.currentTab_) return;
   this.currentTab_.changed();
-  // Mark dirty so the periodic sweep only persists when something changed.
-  this.tabsDirty_ = true;
 
   // Auto-save for PWA files after a delay
   this.scheduleAutoSave_();
@@ -824,7 +822,6 @@ Tabs.prototype.saveAllTabsToLocalStorage_ = function() {
       });
     }
     localStorage.setItem('quicktext_open_tabs', JSON.stringify(tabsData));
-    this.tabsDirty_ = false;
   } catch(e) {
     console.error('Error saving tabs to localStorage:', e);
   }

@@ -277,13 +277,7 @@ WindowController.prototype.resizeOnMouseMove_ = function(e) {
   let change = e.clientX - this.resizeMouseStartX_;
   let sidebarWidth = this.resizeStartWidth_ + change;
   if (sidebarWidth < 20) sidebarWidth = 20;
-  // Coalesce the width write into one per frame (mousemove fires many times/s).
-  const sidebar = document.getElementById('sidebar');
-  if (this.resizeRaf_) cancelAnimationFrame(this.resizeRaf_);
-  this.resizeRaf_ = requestAnimationFrame(() => {
-    this.resizeRaf_ = null;
-    if (sidebar) sidebar.style.width = sidebarWidth + 'px';
-  });
+  $('#sidebar').css('width', sidebarWidth + 'px');
   return sidebarWidth;
 };
 
