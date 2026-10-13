@@ -78,10 +78,6 @@ TextApp.prototype.onSettingsReady_ = function() {
 
   this.initEditor_();
 
-  // The app chrome is fully initialized (theme applied, sidebar sized,
-  // editor created): re-enable CSS transitions for user interactions.
-  document.documentElement.classList.remove('qt-loading');
-
   this.windowController_.setAlwaysOnTop(this.settings_.get('alwaysontop'));
 
   // Setup format toolbar
@@ -96,6 +92,15 @@ TextApp.prototype.onSettingsReady_ = function() {
 
   // Open any files passed at launch that arrived before tabs_ existed.
   processPendingLaunchFiles_();
+
+  // Re-enable CSS transitions only once the full layout is applied, and on the
+  // next frame: otherwise the sidebar visibly slides/settles on first paint
+  // (which looked like two overlapping window frames).
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('qt-loading');
+    });
+  });
 };
 
 /**
