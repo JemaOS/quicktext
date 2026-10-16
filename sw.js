@@ -11,7 +11,7 @@
 //    re-download the ~1.9 MB code payload.
 //  - Precache is resilient: one failed asset never aborts the whole install.
 
-const CACHE_NAME = 'quicktext-v26';
+const CACHE_NAME = 'quicktext-v27';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -119,6 +119,12 @@ async function handleFetch(request) {
   // Fresh app shell first (so a deploy is picked up), everything else served
   // from cache instantly and refreshed in the background.
   if (isNavigate(request)) {
+    return networkFirst(request);
+  }
+  // The manifest drives the window/splash colour: always try the network so a
+  // theme change (light/dark manifest) is picked up, cache as offline fallback.
+  const { pathname } = new URL(request.url);
+  if (pathname === '/manifest.json' || pathname === '/manifest-dark.json') {
     return networkFirst(request);
   }
   return staleWhileRevalidate(request);

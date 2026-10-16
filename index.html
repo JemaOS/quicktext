@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="QuickText - Fast and simple text editor">
   <meta name="theme-color" content="#7376db">
+  <meta name="color-scheme" content="light dark">
+  <!-- Paint the canvas with the theme colour before anything else (the <body>
+       does not exist yet): without this, <html> is transparent and the browser
+       paints its default white, flashing white in dark mode. -->
+  <style>
+    html { background-color: #ffffff; }
+    @media (prefers-color-scheme: dark) { html { background-color: #1f1f1f; } }
+    html[data-theme-init="light"] { background-color: #ffffff; }
+    html[data-theme-init="dark"] { background-color: #1f1f1f; }
+  </style>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="QuickText">
