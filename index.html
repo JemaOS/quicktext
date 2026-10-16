@@ -39,9 +39,29 @@
   <script>
     (function() {
       try {
-        // Try to read saved theme from chrome.storage via a sync-accessible fallback
-        var saved = localStorage.getItem('quicktext_theme_hint');
-        var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        // Resolve the theme syntonously for the first paint. The saved
+        // *preference* is authoritative: in "use device theme" mode ('default')
+        // the OS must win, otherwise a theme change made while the app was closed
+        // left a stale hint and the app booted in the previous theme (wrong-color
+        // flash, and the wrong manifest). The hint is only a fallback for
+        // installs that predate the preference key.
+        var pref = null;
+        try { pref = localStorage.getItem('quicktext_theme_setting'); } catch (e) {}
+        var osDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme;
+        if (pref === 'light' || pref === 'dark') {
+          theme = pref;
+        } else if (pref === 'default' || pref === null) {
+          if (pref === 'default') {
+            theme = osDark ? 'dark' : 'light';
+          } else {
+            var hint = null;
+            try { hint = localStorage.getItem('quicktext_theme_hint'); } catch (e) {}
+            theme = hint || (osDark ? 'dark' : 'light');
+          }
+        } else {
+          theme = osDark ? 'dark' : 'light';
+        }
         document.documentElement.setAttribute('data-theme-init', theme);
         // Keep the installed app's manifest (window/splash colour) in sync with
         // the theme: a manifest cannot follow prefers-color-scheme on its own.

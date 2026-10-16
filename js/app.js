@@ -66,6 +66,12 @@ TextApp.prototype.getFilesToRetain = function() {
 TextApp.prototype.setTheme = function() {
   const theme = this.settings_.get('theme');
 
+  // Remember the *preference* ('default' | 'light' | 'dark'), not just the
+  // resolved theme: on the next boot the "use device theme" setting must follow
+  // the OS again, otherwise a system theme change made while the app was closed
+  // left a stale hint and the app started in the previous theme (wrong flash).
+  try { localStorage.setItem('quicktext_theme_setting', this.settings_.getAll()['theme']); } catch (e) {}
+
   this.windowController_.setTheme(theme);
   this.editor_.setTheme(theme);
 };
