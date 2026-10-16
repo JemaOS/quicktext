@@ -1,0 +1,94 @@
+{
+  "name": "QuickText",
+  "short_name": "QuickText",
+  "description": "Fast and simple text editor",
+  "version": "1.0.2",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#1f1f1f",
+  "theme_color": "#7376db",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon/48x48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icon/64x64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "icon/96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icon/128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icon/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon/256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "icon/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "name": "QuickText Document",
+      "accept": {
+        "text/plain": [".txt", ".text", ".log", ".conf", ".ini", ".cfg", ".env"],
+        "text/markdown": [".md", ".markdown"],
+        "text/html": [".html", ".htm", ".xhtml"],
+        "text/css": [".css", ".scss", ".less"],
+        "text/javascript": [".js", ".mjs", ".jsx"],
+        "application/typescript": [".ts", ".tsx"],
+        "application/json": [".json", ".map"],
+        "application/xml": [".xml"],
+        "text/csv": [".csv"],
+        "application/x-sh": [".sh", ".bash"]
+      },
+      "launch_type": "single-client"
+    }
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    },
+    "accept": ["text/plain", "text/markdown", "text/html", "text/*"]
+  },
+  "categories": ["utility", "textEditor"],
+  "prefer_related_applications": false
+}

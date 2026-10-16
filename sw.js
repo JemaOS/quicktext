@@ -11,11 +11,12 @@
 //    re-download the ~1.9 MB code payload.
 //  - Precache is resilient: one failed asset never aborts the whole install.
 
-const CACHE_NAME = 'quicktext-v25';
+const CACHE_NAME = 'quicktext-v26';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/manifest-dark.json',
   '/css/app.css',
   '/css/print.css',
   '/js/chrome-shim.js',

@@ -5,7 +5,7 @@
   "installCommand": null,
   "headers": [
     {
-      "source": "/manifest.json",
+      "source": "/(manifest.json|manifest-dark.json)",
       "headers": [
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },

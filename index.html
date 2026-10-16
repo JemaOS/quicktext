@@ -33,6 +33,12 @@
         var saved = localStorage.getItem('quicktext_theme_hint');
         var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme-init', theme);
+        // Keep the installed app's manifest (window/splash colour) in sync with
+        // the theme: a manifest cannot follow prefers-color-scheme on its own.
+        if (theme === 'dark') {
+          var manifestLink = document.querySelector('link[rel="manifest"]');
+          if (manifestLink) manifestLink.href = 'manifest-dark.json';
+        }
         // Freeze all CSS transitions until the app is fully initialized:
         // the forced 200ms background-color transition on `*` otherwise
         // cross-fades the window chrome over the first paint, and the
