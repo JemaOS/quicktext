@@ -694,6 +694,10 @@ function processPendingLaunchFiles_() {
   if (!textApp.tabs_ || pendingLaunchFiles_.length === 0) return;
   const files = pendingLaunchFiles_;
   pendingLaunchFiles_ = [];
+  // Remember that this session was opened with a file: the session restore
+  // (chrome-shim) uses it to not add an empty "Untitled" tab after the file and
+  // to keep the opened file as the active tab.
+  window.__qtLaunchedWithFile = true;
   files.forEach(fileData => {
     // Create a fake entry object to work with existing code
     const fakeEntry = {
@@ -709,6 +713,9 @@ function processPendingLaunchFiles_() {
 document.addEventListener('pwa-launch-files', function(e) {
   const files = e.detail;
   if (files && files.length > 0) {
+    // Set it here too: tabs_ may not exist yet, so processPendingLaunchFiles_
+    // can bail out before setting it.
+    window.__qtLaunchedWithFile = true;
     pendingLaunchFiles_ = pendingLaunchFiles_.concat(files);
     processPendingLaunchFiles_();
   }

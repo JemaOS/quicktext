@@ -65,16 +65,24 @@
       "action": "./",
       "name": "QuickText Document",
       "accept": {
-        "text/plain": [".txt", ".text", ".log", ".conf", ".ini", ".cfg", ".env"],
-        "text/markdown": [".md", ".markdown"],
+        "text/plain": [".txt", ".text", ".log", ".nfo", ".conf", ".ini", ".cfg", ".env"],
+        "text/rtf": [".rtf"],
+        "application/rtf": [".rtf"],
+        "text/markdown": [".md", ".markdown", ".mkd"],
         "text/html": [".html", ".htm", ".xhtml"],
         "text/css": [".css", ".scss", ".less"],
-        "text/javascript": [".js", ".mjs", ".jsx"],
+        "text/javascript": [".js", ".mjs", ".cjs", ".jsx"],
         "application/typescript": [".ts", ".tsx"],
         "application/json": [".json", ".map"],
         "application/xml": [".xml"],
         "text/csv": [".csv"],
-        "application/x-sh": [".sh", ".bash"]
+        "application/x-sh": [".sh", ".bash", ".zsh"],
+        "application/x-yaml": [".yaml", ".yml"],
+        "application/toml": [".toml"],
+        "text/x-python": [".py"],
+        "application/sql": [".sql"],
+        "text/x-tex": [".tex"],
+        "text/x-diff": [".diff", ".patch"]
       },
       "launch_type": "single-client"
     }

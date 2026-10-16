@@ -596,6 +596,16 @@
                         }
                       }
                       console.log('All tabs restored');
+                      // When the session was opened with a file, keep that file
+                      // as the active tab (do not let a restored tab steal it).
+                      if (window.__qtLaunchedWithFile && app.tabs_ && app.tabs_.tabs_) {
+                        const fileTab = app.tabs_.tabs_.find(function (t) {
+                          return t.getEntry && t.getEntry();
+                        });
+                        if (fileTab) {
+                          app.tabs_.showTab(fileTab.getId());
+                        }
+                      }
                       // Ensure editor is enabled after restoring tabs
                       if (app.tabs_ && app.tabs_.editor_) {
                         app.tabs_.editor_.enable();
@@ -604,6 +614,20 @@
                     }
                     
                     const tabData = tabsToRestore[index];
+
+                    // A file launched at startup already opened its own tab.
+                    // Do not restore a leftover empty "Untitled" tab: it would
+                    // appear as an extra empty tab and (created last) steal the
+                    // focus from the opened file.
+                    const isEmptyUntitled = !tabData.hasEntry && !tabData.customName &&
+                        (!tabData.content || tabData.content.length === 0);
+                    const hasFileTab = !!(app.tabs_ && app.tabs_.tabs_ &&
+                        app.tabs_.tabs_.some(function (t) { return t.getEntry && t.getEntry(); }));
+                    if (isEmptyUntitled && (window.__qtLaunchedWithFile || hasFileTab)) {
+                      console.log('Skipping empty Untitled restore (file launched)');
+                      restoreNextTab(index + 1);
+                      return;
+                    }
 
                     // Dedup: a tab with the same name may already exist
                     // (opened via launch, or restored earlier from a state
