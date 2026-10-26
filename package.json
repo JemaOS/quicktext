@@ -1,7 +1,7 @@
 {
   "name": "quicktext",
   "version": "1.0.0",
-  "description": "QuickText - Fast and simple text editor PWA",
+  "description": "QuickText — a fast, minimalist, offline-first text and code editor PWA with multi-tab editing and syntax highlighting.",
   "main": "index.html",
   "scripts": {
     "dev": "npx serve -l 3000",
@@ -11,7 +11,15 @@
   "keywords": [
     "pwa",
     "text-editor",
-    "quicktext"
+    "notepad",
+    "code-editor",
+    "syntax-highlighting",
+    "offline",
+    "multi-tab",
+    "markdown",
+    "plain-text",
+    "quicktext",
+    "vanilla-js"
   ],
   "author": "Jema Technology",
   "license": "MIT",

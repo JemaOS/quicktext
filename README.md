@@ -14,6 +14,10 @@
 
 [Features](#-features) · [Screenshots](#-screenshots) · [Getting started](#-getting-started) · [Tech stack](#-tech-stack) · [License](#-license)
 
+<br>
+
+<sub>**Keywords:** text editor · notepad · minimalist editor · lightweight editor · offline text editor · syntax highlighting · code editor · multi-tab · find and replace · markdown editor · plain text · QuickText · browser editor · installable PWA · Chrome app · vanilla JavaScript</sub>
+
 </div>
 
 ![QuickText — editor](screenshots/main.png)
@@ -46,6 +50,10 @@
 | Light | Dark |
 | :---: | :---: |
 | <img src="screenshots/main.png" alt="QuickText — light" /> | <img src="screenshots/main-dark.png" alt="QuickText — dark" /> |
+
+| File menu | Settings |
+| :---: | :---: |
+| <img src="screenshots/menu.png" alt="QuickText — file menu (new, open, save as)" /> | <img src="screenshots/settings.png" alt="QuickText — settings" /> |
 
 ---
 
