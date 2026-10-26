@@ -1,63 +1,111 @@
-# QuickText - JemaOS Text Editor
+<div align="center">
 
-<p align="center">
-  <img src="icon/logo.svg" alt="QuickText Logo" width="128" height="128">
-</p>
+<h1>QuickText</h1>
 
-QuickText is a fast and simple text editor developed by **Jema Technology** for the JemaOS ecosystem. It runs as a Progressive Web App (PWA) and can be installed on any modern browser.
+### A fast, minimalist text editor — offline-first and installable
 
-## Features
+[![Made by Jema Technology](https://img.shields.io/badge/Made%20by-Jema%20Technology-8286ef)](https://www.jematechnology.fr)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
+[![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-8286ef)](#-install-as-a-pwa)
+[![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-f7df1e?logo=javascript&logoColor=black)](#-tech-stack)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
 
-- 📝 **Fast & Simple**: Lightweight text editor with instant load times
-- 🌐 **PWA Support**: Install as a native app on desktop and mobile
-- 🔤 **Syntax Highlighting**: Support for multiple programming languages
-- 🎨 **Customizable**: Themes, fonts, and text formatting options
-- 📱 **Cross-Platform**: Works on JemaOS, Windows, macOS, Linux
-- 📂 **File Associations**: Open .txt files directly with QuickText
+**Instant load · syntax highlighting · multi-tab · keyboard-first · works offline**
 
-## Supported File Types
+[Features](#-features) · [Screenshots](#-screenshots) · [Getting started](#-getting-started) · [Tech stack](#-tech-stack) · [License](#-license)
 
-- Text files: `.txt`, `.text`, `.log`, `.md`, `.rtf`
-- Web: `.html`, `.htm`, `.css`
-- Programming: `.js`, `.json`, `.py`, `.c`, `.cpp`, `.java`, `.rs`, `.go`
+</div>
 
-## Installation
+![QuickText — editor](screenshots/main.png)
 
-## Development
+---
+
+## ✨ Features
+
+- ⚡ **Fast & simple** — a lightweight editor with instant load times
+- 📑 **Multi-tab editing** with session restore
+- 🔤 **Syntax highlighting** for many languages (CodeMirror)
+- 🔎 **Find & replace** across the current document
+- 🎨 **Themes** — light and dark, follows your system
+- 🌍 **English / French** UI
+- 📂 **File associations** — open `.txt` and other files directly
+- 📶 **PWA / offline** — install it and edit without a connection
+
+## 📄 Supported file types
+
+| Category | Extensions |
+| --- | --- |
+| Text | `.txt` `.text` `.log` `.md` `.rtf` |
+| Web | `.html` `.htm` `.css` |
+| Code | `.js` `.json` `.py` `.c` `.cpp` `.java` `.rs` `.go` |
+
+---
+
+## 📸 Screenshots
+
+| Light | Dark |
+| :---: | :---: |
+| <img src="screenshots/main.png" alt="QuickText — light" /> | <img src="screenshots/main-dark.png" alt="QuickText — dark" /> |
+
+---
+
+## 🚀 Getting started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
+- [Node.js](https://nodejs.org) 18+ (only to run the local static server)
 
-### Setup
 ```bash
-# Install dependencies
+git clone https://github.com/JemaOS/quicktext.git
+cd quicktext
 npm install
-
-# Run development server
-npm run dev
+npm run dev        # serves the app on http://localhost:3000
 ```
 
-### Build for Production
+No build step is required — QuickText is a static PWA.
+
+### Install as a PWA
+
+Open the app in Chrome, Edge, Brave or Safari and click **Install**. It then works fully offline.
+
+---
+
+## 🛠️ Tech stack
+
+- **Vanilla HTML / CSS / JavaScript** (no framework, no bundler)
+- **CodeMirror** for editing & syntax highlighting
+- **Service Worker** + Web App Manifest for offline/PWA
+- `chrome.*` shim to run the same code as a PWA and a Chrome App
+
+---
+
+## 📁 Project structure
+
+```
+js/        # editor, tabs, settings, search, i18n shim
+css/       # app + print styles
+_locales/  # ~20 UI languages
+icon/      # app icons
+sw.js      # service worker
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Fork, branch, and open a pull request.
+
 ```bash
-npm run build
+git checkout -b feat/my-feature
+git commit -m "feat: my feature"
+git push origin feat/my-feature
 ```
 
-## Technology Stack
+---
 
-- **CodeMirror 6**: Text editor core
-- **Material Design**: UI components
-- **PWA**: Service Worker for offline support
-- **Chromium App API**: File system access (via shim)
+## 📄 License
 
-## License
+Released under the **MIT License** — see [LICENSE.md](LICENSE.md).
 
-Copyright (c) 2026 Jema Technology Authors. All rights reserved.
-
-See [LICENSE.md](LICENSE.md) for details.
-
-## Jema Technology
-
-QuickText is part of the JemaOS project - a suite of web applications designed for productivity.
-
-- 🌐 Website: https://www.jematechnology.fr
+<div align="center">
+Made with ❤️ by <a href="https://www.jematechnology.fr">Jema Technology</a>
+</div>
