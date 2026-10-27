@@ -55,6 +55,12 @@
 | :---: | :---: |
 | <img src="screenshots/menu.png" alt="QuickText — file menu (new, open, save as)" /> | <img src="screenshots/settings.png" alt="QuickText — settings" /> |
 
+### 📱 Mobile
+
+| Dark | Light |
+| :---: | :---: |
+| <img src="screenshots/mobile-dark.png" alt="QuickText — mobile, dark" width="300" /> | <img src="screenshots/mobile-light.png" alt="QuickText — mobile, light" width="300" /> |
+
 ---
 
 ## 🚀 Getting started
